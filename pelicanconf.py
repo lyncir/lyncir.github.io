@@ -7,14 +7,14 @@ PATH = 'content'
 
 TIMEZONE = 'Asia/Shanghai'
 
-DEFAULT_LANG = 'cn'
+DEFAULT_LANG = 'en'
 
 # Feed generation is usually not desired when developing
-FEED_ALL_ATOM = True
-CATEGORY_FEED_ATOM = True
-TRANSLATION_FEED_ATOM = False
-AUTHOR_FEED_ATOM = False
-AUTHOR_FEED_RSS = False
+FEED_ALL_ATOM = None
+CATEGORY_FEED_ATOM = None
+TRANSLATION_FEED_ATOM = None
+AUTHOR_FEED_ATOM = None
+AUTHOR_FEED_RSS = None
 
 # Blogroll
 LINKS = (('Pelican', 'https://getpelican.com/'),
@@ -35,7 +35,7 @@ DEFAULT_PAGINATION = 5
 THEME = "./pelican-themes/basic"
 
 # 日期格式
-DEFAULT_DATE_FORMAT = "%Y-%m-%d"
+DEFAULT_DATE_FORMAT = "%Y-%m-%d %H:%M:%S"
 
 # 静态文件
 STATIC_PATHS = ['images']
