@@ -10,11 +10,11 @@ TIMEZONE = 'Asia/Shanghai'
 DEFAULT_LANG = 'cn'
 
 # Feed generation is usually not desired when developing
-FEED_ALL_ATOM = None
-CATEGORY_FEED_ATOM = None
-TRANSLATION_FEED_ATOM = None
-AUTHOR_FEED_ATOM = None
-AUTHOR_FEED_RSS = None
+FEED_ALL_ATOM = True
+CATEGORY_FEED_ATOM = True
+TRANSLATION_FEED_ATOM = False
+AUTHOR_FEED_ATOM = False
+AUTHOR_FEED_RSS = False
 
 # Blogroll
 LINKS = (('Pelican', 'https://getpelican.com/'),
