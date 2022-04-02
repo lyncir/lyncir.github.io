@@ -111,4 +111,8 @@ last_runlog.log
 
 # ctag
 tags
+
+# pelican
 output
+tag
+category

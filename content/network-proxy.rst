@@ -4,6 +4,7 @@
 :date: 2022-03-02 11:22
 :category: linux
 :tags: network, proxy
+:slug: network-proxy
 
 git
 ----

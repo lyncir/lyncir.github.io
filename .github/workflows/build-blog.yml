@@ -1,0 +1,42 @@
+name: Deploy blog
+on:
+  push:
+    branches:
+      - master
+jobs:
+  build_job:
+    name: Deploy blog
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.7
+      - name: Checkout website source
+        id: checkout-master
+        uses: actions/checkout@v2
+      - name: Cache dependencies
+        uses: actions/cache@v2
+        with:
+          path: ~/.cache/pip
+          key: pelican-4.7.2-${{ hashFiles('requirements.txt') }}
+          restore-keys: |
+            pelican-4.7.2-
+      - name: Install Pelican
+        run: |
+          pip install -r requirements.txt
+      - name: Run Pelican
+        id: run-pelican
+        run: |
+          pelican content --output docs --settings publishconf.py
+      - name: Push to GitHub pages
+        id: push-to-gh-pages
+        run: |
+          git config --global user.name "lyncir"
+          git config --global user.email "lyncir@gmail.com"
+
+          git add docs/
+          git commit --amend --no-edit
+
+          git push origin master:deploy --force
+

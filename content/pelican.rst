@@ -4,6 +4,7 @@
 :date: 2022-02-28 10:20
 :category: python
 :tags: pelican
+:slug: pelican
 
 
 写一篇新文章
@@ -17,8 +18,10 @@
    ####
 
    :date: 日期,格式 2010-10-03 10:20
+   :modified: 修改时间
    :category: 分类,逗号分割
    :tags: 标签,逗号分割
+   :slug: url路径
 
    正文
 

@@ -4,6 +4,7 @@ python性能分析工具
 :date: 2022-03-08 11:40
 :category: python
 :tags: profiler
+:slug: profiler
 
 
 py-spy

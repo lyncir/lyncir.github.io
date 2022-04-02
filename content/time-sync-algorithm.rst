@@ -4,6 +4,7 @@
 :date: 2022-03-16 17:31
 :category: game-dev 
 :tags: time-sync
+:slug: time-sync-algorithm
 
 
 UDP
