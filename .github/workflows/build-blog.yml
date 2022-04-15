@@ -28,15 +28,14 @@ jobs:
       - name: Run Pelican
         id: run-pelican
         run: |
-          #pelican content --output docs --settings publishconf.py
-          pelican content --output docs --settings pelicanconf.py
+          pelican content -o output -s pelicanconf.py
       - name: Push to GitHub pages
         id: push-to-gh-pages
         run: |
           git config --global user.name "lyncir"
           git config --global user.email "lyncir@gmail.com"
 
-          git add docs/
+          git add output/
           git commit --amend --no-edit
 
           git push origin master:deploy --force
