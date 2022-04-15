@@ -29,6 +29,7 @@ jobs:
         id: run-pelican
         run: |
           pelican content -o docs -s pelicanconf.py
+          ls docs/ -al
       - name: Push to GitHub pages
         id: push-to-gh-pages
         run: |
