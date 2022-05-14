@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*- #
 AUTHOR = 'lyncir'
 SITENAME = "Lyncir's Blog"
-SITEURL = ''
+SITEURL = 'https://lyncir.github.io'
 
 PATH = 'content'
 
@@ -10,7 +10,7 @@ TIMEZONE = 'Asia/Shanghai'
 DEFAULT_LANG = 'en'
 
 # Feed generation is usually not desired when developing
-FEED_ALL_ATOM = None
+FEED_ALL_ATOM = 'feeds/all.atom.xml'
 CATEGORY_FEED_ATOM = None
 TRANSLATION_FEED_ATOM = None
 AUTHOR_FEED_ATOM = None
@@ -38,7 +38,8 @@ THEME = "./pelican-themes/basic"
 DEFAULT_DATE_FORMAT = "%Y-%m-%d %H:%M:%S"
 
 # 静态文件
-STATIC_PATHS = ['images']
+STATIC_PATHS = ['images', 'htmls']
+ARTICLE_PATHS = ['blog']
 
 OUTPUT_PATH = 'docs/'
 DELETE_OUTPUT_DIRECTORY = True
