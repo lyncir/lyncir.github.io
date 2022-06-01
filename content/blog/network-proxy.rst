@@ -38,3 +38,11 @@ pip
 .. code-block:: bash
 
    $ pip install --proxy http://127.0.0.1:1080 -r requirements.txt
+
+
+docker
+------
+
+.. code-block:: bash
+
+   $ HTTP_PROXY=http://127.0.0.1:1080 docker pull busybox
