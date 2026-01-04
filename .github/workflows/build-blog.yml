@@ -7,11 +7,16 @@ jobs:
   build_job:
     name: Deploy blog
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.8"]
+
     steps:
       - name: Install Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
-          python-version: 3.7
+          python-version: ${{ matrix.python-version }}
+          cache: 'pip'
       - name: Checkout website source
         id: checkout-master
         uses: actions/checkout@v4
