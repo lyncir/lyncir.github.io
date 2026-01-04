@@ -16,10 +16,10 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
-          cache: 'pip'
+
       - name: Checkout website source
-        id: checkout-master
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
+
       - name: Cache dependencies
         uses: actions/cache@v4
         with:
@@ -27,14 +27,17 @@ jobs:
           key: pelican-4.7.2-${{ hashFiles('requirements.txt') }}
           restore-keys: |
             pelican-4.7.2-
+
       - name: Install Pelican
         run: |
           pip install -r requirements.txt
+
       - name: Run Pelican
         id: run-pelican
         run: |
           pelican content -o docs -s pelicanconf.py
           ls docs/ -al
+
       - name: Push to GitHub pages
         id: push-to-gh-pages
         run: |
