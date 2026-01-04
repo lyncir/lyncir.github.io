@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+          <title>Lyncir's Blog - SQL排序确定性</title>
+        <meta charset="utf-8" />
+        <meta name="generator" content="Pelican" />
+        <link href="https://lyncir.github.io/feeds/all.atom.xml" type="application/atom+xml" rel="alternate" title="Lyncir's Blog Full Atom Feed" />
+
+        <link rel="stylesheet" href="https://lyncir.github.io/theme/css/rdark.css" />
+	<link rel="stylesheet" type="text/css" href="https://lyncir.github.io/theme/css/main.css" />
+        <link href="https://lyncir.github.io/" type="application/atom+xml" rel="alternate" title="Lyncir's Blog ATOM Feed" /><!--[if IE]><script src="http://html5shiv.googlecode.com/svn/trunk/html5.js"></script><![endif]-->
+	
+<!-- Using MathJax, with the delimiters $ -->
+<!-- Conflict with pygments for the .mo and .mi -->
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+  "HTML-CSS": {
+  styles: {
+  ".MathJax .mo, .MathJax .mi": {color: "black ! important"}}
+  },
+  tex2jax: {inlineMath: [['$','$'], ['\\\\(','\\\\)']],processEscapes: true}
+  });
+</script>
+
+<script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML"></script>
+</head>
+
+
+
+
+    <meta name="tags" content="mysql" />
+
+</head>
+
+<body id="index" class="home">
+        <header id="banner" class="body">
+                <h1><a href="https://lyncir.github.io/">Lyncir's Blog</a></h1>
+        </header><!-- /#banner -->
+        <nav id="menu"><ul>
+            <li class="active"><a href="https://lyncir.github.io/category/db.html">db</a></li>
+            <li><a href="https://lyncir.github.io/category/game-dev.html">game-dev</a></li>
+            <li><a href="https://lyncir.github.io/category/git.html">git</a></li>
+            <li><a href="https://lyncir.github.io/category/linux.html">linux</a></li>
+            <li><a href="https://lyncir.github.io/category/python.html">python</a></li>
+        </ul></nav><!-- /#menu -->
+<section id="content" class="body">
+  <header>
+    <h2 class="entry-title">
+      <a href="https://lyncir.github.io/sql-sort-order.html" rel="bookmark"
+         title="Permalink to SQL排序确定性">SQL排序确定性</a></h2>
+ 
+  </header>
+  <footer class="post-info">
+    <time class="published" datetime="2024-11-07T17:02:00+08:00">
+      2024-11-07 17:02:00
+    </time>
+    <address class="vcard author">
+      By           <a class="url fn" href="https://lyncir.github.io/author/lyncir.html">lyncir</a>
+    </address>
+    <div class="category">
+        Category: <a href="https://lyncir.github.io/category/db.html">db</a>
+    </div>
+    <div class="tags">
+        Tags:
+            <a href="https://lyncir.github.io/tag/mysql.html">mysql</a>
+    </div>
+  </footer><!-- /.post-info -->
+  <div class="entry-content">
+    <div class="section" id="section-1">
+<h2>容易遗忘的规则</h2>
+<p>关于SQL数据库，无序查询可以按任何顺序返回结果，即`非确定性排序顺序`。每次执行查询时，顺序都无法保证。</p>
+<div class="highlight"><pre><span></span>mysql&gt;<span class="w"> </span>SELECT<span class="w"> </span>*<span class="w"> </span>FROM<span class="w"> </span>ratings<span class="w"> </span>ORDER<span class="w"> </span>BY<span class="w"> </span>category<span class="p">;</span>
++----+----------+--------+
+<span class="p">|</span><span class="w"> </span>id<span class="w"> </span><span class="p">|</span><span class="w"> </span>category<span class="w"> </span><span class="p">|</span><span class="w"> </span>rating<span class="w"> </span><span class="p">|</span>
++----+----------+--------+
+<span class="p">|</span><span class="w">  </span><span class="m">1</span><span class="w"> </span><span class="p">|</span><span class="w">        </span><span class="m">1</span><span class="w"> </span><span class="p">|</span><span class="w">    </span><span class="m">4</span>.5<span class="w"> </span><span class="p">|</span>
+<span class="p">|</span><span class="w">  </span><span class="m">5</span><span class="w"> </span><span class="p">|</span><span class="w">        </span><span class="m">1</span><span class="w"> </span><span class="p">|</span><span class="w">    </span><span class="m">3</span>.2<span class="w"> </span><span class="p">|</span>
+<span class="p">|</span><span class="w">  </span><span class="m">3</span><span class="w"> </span><span class="p">|</span><span class="w">        </span><span class="m">2</span><span class="w"> </span><span class="p">|</span><span class="w">    </span><span class="m">3</span>.7<span class="w"> </span><span class="p">|</span>
+<span class="p">|</span><span class="w">  </span><span class="m">4</span><span class="w"> </span><span class="p">|</span><span class="w">        </span><span class="m">2</span><span class="w"> </span><span class="p">|</span><span class="w">    </span><span class="m">3</span>.5<span class="w"> </span><span class="p">|</span>
+<span class="p">|</span><span class="w">  </span><span class="m">6</span><span class="w"> </span><span class="p">|</span><span class="w">        </span><span class="m">2</span><span class="w"> </span><span class="p">|</span><span class="w">    </span><span class="m">3</span>.5<span class="w"> </span><span class="p">|</span>
+<span class="p">|</span><span class="w">  </span><span class="m">2</span><span class="w"> </span><span class="p">|</span><span class="w">        </span><span class="m">3</span><span class="w"> </span><span class="p">|</span><span class="w">    </span><span class="m">5</span>.0<span class="w"> </span><span class="p">|</span>
+<span class="p">|</span><span class="w">  </span><span class="m">7</span><span class="w"> </span><span class="p">|</span><span class="w">        </span><span class="m">3</span><span class="w"> </span><span class="p">|</span><span class="w">    </span><span class="m">2</span>.7<span class="w"> </span><span class="p">|</span>
++----+----------+--------+
+</pre></div>
+<p>以上查询按category列排序，但对于id和rating列是不确定的。</p>
+<p>如果多次运行此查询，理论上每次都会得到不同顺序的结果。实际上，可能会得到看起来像隐式排序的结果，并且每次运行查询时都会得到一致的结果。</p>
+</div>
+<div class="section" id="section-2">
+<h2>总结</h2>
+<p>在不同的MySQL版本中，由于隐式排序逻辑的不一致，导致返回的结果顺序有可能不一致。但同一版本中是一致的(不要依赖它)。</p>
+<p>因此，如果返回顺序结果很重要，请使用`确定性排序顺序`查询。</p>
+<div class="highlight"><pre><span></span>mysql&gt;<span class="w"> </span>SELECT<span class="w"> </span>*<span class="w"> </span>FROM<span class="w"> </span>ratings<span class="w"> </span>ORDER<span class="w"> </span>BY<span class="w"> </span>category,<span class="w"> </span>id<span class="p">;</span>
++----+----------+--------+
+<span class="p">|</span><span class="w"> </span>id<span class="w"> </span><span class="p">|</span><span class="w"> </span>category<span class="w"> </span><span class="p">|</span><span class="w"> </span>rating<span class="w"> </span><span class="p">|</span>
++----+----------+--------+
+<span class="p">|</span><span class="w">  </span><span class="m">1</span><span class="w"> </span><span class="p">|</span><span class="w">        </span><span class="m">1</span><span class="w"> </span><span class="p">|</span><span class="w">    </span><span class="m">4</span>.5<span class="w"> </span><span class="p">|</span>
+<span class="p">|</span><span class="w">  </span><span class="m">5</span><span class="w"> </span><span class="p">|</span><span class="w">        </span><span class="m">1</span><span class="w"> </span><span class="p">|</span><span class="w">    </span><span class="m">3</span>.2<span class="w"> </span><span class="p">|</span>
+<span class="p">|</span><span class="w">  </span><span class="m">3</span><span class="w"> </span><span class="p">|</span><span class="w">        </span><span class="m">2</span><span class="w"> </span><span class="p">|</span><span class="w">    </span><span class="m">3</span>.7<span class="w"> </span><span class="p">|</span>
+<span class="p">|</span><span class="w">  </span><span class="m">4</span><span class="w"> </span><span class="p">|</span><span class="w">        </span><span class="m">2</span><span class="w"> </span><span class="p">|</span><span class="w">    </span><span class="m">3</span>.5<span class="w"> </span><span class="p">|</span>
+<span class="p">|</span><span class="w">  </span><span class="m">6</span><span class="w"> </span><span class="p">|</span><span class="w">        </span><span class="m">2</span><span class="w"> </span><span class="p">|</span><span class="w">    </span><span class="m">3</span>.5<span class="w"> </span><span class="p">|</span>
+<span class="p">|</span><span class="w">  </span><span class="m">2</span><span class="w"> </span><span class="p">|</span><span class="w">        </span><span class="m">3</span><span class="w"> </span><span class="p">|</span><span class="w">    </span><span class="m">5</span>.0<span class="w"> </span><span class="p">|</span>
+<span class="p">|</span><span class="w">  </span><span class="m">7</span><span class="w"> </span><span class="p">|</span><span class="w">        </span><span class="m">3</span><span class="w"> </span><span class="p">|</span><span class="w">    </span><span class="m">2</span>.7<span class="w"> </span><span class="p">|</span>
++----+----------+--------+
+</pre></div>
+<p>Ref: <a class="reference external" href="https://dev.mysql.com/doc/refman/8.0/en/limit-optimization.html">LIMIT Query Optimization</a></p>
+</div>
+
+  </div><!-- /.entry-content -->
+</section>
+<script src="https://giscus.app/client.js"
+        data-repo="lyncir/lyncir.github.io"
+        data-repo-id="R_kgDOG6y0Rw"
+        data-category="Announcements"
+        data-category-id="DIC_kwDOG6y0R84COoru"
+        data-mapping="pathname"
+        data-reactions-enabled="1"
+        data-emit-metadata="0"
+        data-input-position="bottom"
+        data-theme="light"
+        data-lang="zh-CN"
+        data-loading="lazy"
+        crossorigin="anonymous"
+        async>
+</script>
+        <footer id="contentinfo" class="body">
+                <address id="about" class="vcard body">
+                Proudly powered by <a href="https://getpelican.com/">Pelican</a>,
+                which takes great advantage of <a href="https://www.python.org/">Python</a>.
+                </address><!-- /#about -->
+        </footer><!-- /#contentinfo -->
+</body>
+</html>

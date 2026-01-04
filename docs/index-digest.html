@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+          <title>Lyncir's Blog - 数据库schema优化工具</title>
+        <meta charset="utf-8" />
+        <meta name="generator" content="Pelican" />
+        <link href="https://lyncir.github.io/feeds/all.atom.xml" type="application/atom+xml" rel="alternate" title="Lyncir's Blog Full Atom Feed" />
+
+        <link rel="stylesheet" href="https://lyncir.github.io/theme/css/rdark.css" />
+	<link rel="stylesheet" type="text/css" href="https://lyncir.github.io/theme/css/main.css" />
+        <link href="https://lyncir.github.io/" type="application/atom+xml" rel="alternate" title="Lyncir's Blog ATOM Feed" /><!--[if IE]><script src="http://html5shiv.googlecode.com/svn/trunk/html5.js"></script><![endif]-->
+	
+<!-- Using MathJax, with the delimiters $ -->
+<!-- Conflict with pygments for the .mo and .mi -->
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+  "HTML-CSS": {
+  styles: {
+  ".MathJax .mo, .MathJax .mi": {color: "black ! important"}}
+  },
+  tex2jax: {inlineMath: [['$','$'], ['\\\\(','\\\\)']],processEscapes: true}
+  });
+</script>
+
+<script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML"></script>
+</head>
+
+
+
+
+    <meta name="tags" content="database" />
+    <meta name="tags" content="index" />
+
+</head>
+
+<body id="index" class="home">
+        <header id="banner" class="body">
+                <h1><a href="https://lyncir.github.io/">Lyncir's Blog</a></h1>
+        </header><!-- /#banner -->
+        <nav id="menu"><ul>
+            <li><a href="https://lyncir.github.io/category/db.html">db</a></li>
+            <li><a href="https://lyncir.github.io/category/game-dev.html">game-dev</a></li>
+            <li><a href="https://lyncir.github.io/category/git.html">git</a></li>
+            <li><a href="https://lyncir.github.io/category/linux.html">linux</a></li>
+            <li class="active"><a href="https://lyncir.github.io/category/python.html">python</a></li>
+        </ul></nav><!-- /#menu -->
+<section id="content" class="body">
+  <header>
+    <h2 class="entry-title">
+      <a href="https://lyncir.github.io/index-digest.html" rel="bookmark"
+         title="Permalink to 数据库schema优化工具">数据库schema优化工具</a></h2>
+ 
+  </header>
+  <footer class="post-info">
+    <time class="published" datetime="2022-04-15T11:42:00+08:00">
+      2022-04-15 11:42:00
+    </time>
+    <address class="vcard author">
+      By           <a class="url fn" href="https://lyncir.github.io/author/lyncir.html">lyncir</a>
+    </address>
+    <div class="category">
+        Category: <a href="https://lyncir.github.io/category/python.html">python</a>
+    </div>
+    <div class="tags">
+        Tags:
+            <a href="https://lyncir.github.io/tag/database.html">database</a>
+            <a href="https://lyncir.github.io/tag/index.html">index</a>
+    </div>
+  </footer><!-- /.post-info -->
+  <div class="entry-content">
+    <p><a class="reference external" href="https://github.com/macbre/index-digest">index-digest</a>: 分析数据库查询和schema并提供索引改进建议</p>
+<div class="section" id="section-1">
+<h2>安装</h2>
+<div class="highlight"><pre><span></span>$<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>indexdigest
+</pre></div>
+</div>
+<div class="section" id="section-2">
+<h2>数据库查询日志</h2>
+<p>示例:</p>
+<div class="highlight"><pre><span></span><span class="c1">-- A comment</span>
+<span class="k">select</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="k">from</span><span class="w"> </span><span class="n">0002_not_used_indices</span><span class="w"> </span><span class="k">order</span><span class="w"> </span><span class="k">by</span><span class="w"> </span><span class="n">id</span>
+<span class="k">select</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="k">from</span><span class="w"> </span><span class="n">0002_not_used_indices</span><span class="w"> </span><span class="k">where</span><span class="w"> </span><span class="n">foo</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s1">&#39;foo&#39;</span><span class="w"> </span><span class="k">and</span><span class="w"> </span><span class="n">id</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">2</span>
+<span class="k">select</span><span class="w"> </span><span class="nf">count</span><span class="p">(</span><span class="o">*</span><span class="p">)</span><span class="w"> </span><span class="k">from</span><span class="w"> </span><span class="n">0002_not_used_indices</span><span class="w"> </span><span class="k">where</span><span class="w"> </span><span class="n">foo</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s1">&#39;foo&#39;</span>
+<span class="cm">/* foo bar */</span><span class="w"> </span><span class="k">select</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="k">from</span><span class="w"> </span><span class="n">0002_not_used_indices</span><span class="w"> </span><span class="k">where</span><span class="w"> </span><span class="n">bar</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s1">&#39;foo&#39;</span>
+<span class="k">INSERT</span><span class="w">  </span><span class="k">IGNORE</span><span class="w"> </span><span class="k">INTO</span><span class="w"> </span><span class="n n-Quoted">`0070_insert_ignore`</span><span class="w"> </span><span class="k">VALUES</span><span class="w"> </span><span class="p">(</span><span class="s1">&#39;123&#39;</span><span class="p">,</span><span class="w"> </span><span class="mi">9</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;2017-01-01&#39;</span><span class="p">);</span>
+</pre></div>
+<p>也可以使用MySQL慢查询日志,但需要进行前置处理</p>
+<div class="highlight"><pre><span></span><span class="n">cat</span><span class="w"> </span><span class="n">mysql</span><span class="o">-</span><span class="k">slow</span><span class="p">.</span><span class="n">log</span><span class="w"> </span><span class="o">|</span><span class="w"> </span><span class="n">egrep</span><span class="w"> </span><span class="o">-</span><span class="n">v</span><span class="w"> </span><span class="s1">&#39;^(SET timestamp|#|throttle: )&#39;</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="n">queries</span><span class="p">.</span><span class="n">log</span>
+</pre></div>
+<p>最后执行 <cite>index_digest --sql-log=queries.log</cite></p>
+</div>
+<div class="section" id="section-3">
+<h2>常用选项</h2>
+<ul class="simple">
+<li><cite>missing_primary_index</cite>: 报告没有主键或唯一索引的表 <a class="reference external" href="https://bugs.mysql.com/bug.php?id=76252">MySQL bug #76252</a></li>
+<li><cite>low_cardinality_index</cite>: 报告使用基数较低的索引</li>
+<li><cite>queries_not_using_index</cite>: 报告没有使用任何索引</li>
+<li><cite>queries_using_filesort</cite>: 报告需要`filesort`的查询. <a class="reference external" href="https://www.percona.com/blog/2009/03/05/what-does-using-filesort-mean-in-mysql/">a sort can’t be performed from an index and quicksort is used</a></li>
+<li><cite>queries_using_temporary</cite>: 报告需要临时表的查询</li>
+<li><cite>queries_using_full_table_scan</cite>: 报告使用全表查询. <a class="reference external" href="https://dev.mysql.com/doc/refman/5.7/en/table-scan-avoidance.html">full table scan</a></li>
+<li><cite>selects_with_like</cite>: 报告使用`LIKE %foo`查询</li>
+<li><cite>having_clause</cite>: 报告 <a class="reference external" href="https://github.com/jarulraj/sqlcheck/blob/master/docs/query/3012.md">queries using HAVING clause</a></li>
+<li><cite>high_offset_selects</cite>: 报告 <a class="reference external" href="https://www.percona.com/blog/2008/09/24/four-ways-to-optimize-paginated-displays/">SELECT queries using high OFFSET</a></li>
+</ul>
+<div class="highlight"><pre><span></span>$<span class="w"> </span>index_digest<span class="w"> </span>mysql://127.0.0.1/database<span class="w"> </span>--sql-log<span class="o">=</span>queries.log<span class="w"> </span>--checks<span class="o">=</span>missing_primary_index,low_cardinality_index,queries_not_using_index,queries_using_filesort,queries_using_temporary,queries_using_full_table_scan,selects_with_like,having_clause,high_offset_selects
+</pre></div>
+</div>
+
+  </div><!-- /.entry-content -->
+</section>
+<script src="https://giscus.app/client.js"
+        data-repo="lyncir/lyncir.github.io"
+        data-repo-id="R_kgDOG6y0Rw"
+        data-category="Announcements"
+        data-category-id="DIC_kwDOG6y0R84COoru"
+        data-mapping="pathname"
+        data-reactions-enabled="1"
+        data-emit-metadata="0"
+        data-input-position="bottom"
+        data-theme="light"
+        data-lang="zh-CN"
+        data-loading="lazy"
+        crossorigin="anonymous"
+        async>
+</script>
+        <footer id="contentinfo" class="body">
+                <address id="about" class="vcard body">
+                Proudly powered by <a href="https://getpelican.com/">Pelican</a>,
+                which takes great advantage of <a href="https://www.python.org/">Python</a>.
+                </address><!-- /#about -->
+        </footer><!-- /#contentinfo -->
+</body>
+</html>
