@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+        <title>Lyncir's Blog - profiler tag</title>
+        <meta charset="utf-8" />
+        <meta name="generator" content="Pelican" />
+        <link href="https://lyncir.github.io/feeds/all.atom.xml" type="application/atom+xml" rel="alternate" title="Lyncir's Blog Full Atom Feed" />
+
+        <link rel="stylesheet" href="https://lyncir.github.io/theme/css/rdark.css" />
+	<link rel="stylesheet" type="text/css" href="https://lyncir.github.io/theme/css/main.css" />
+        <link href="https://lyncir.github.io/" type="application/atom+xml" rel="alternate" title="Lyncir's Blog ATOM Feed" /><!--[if IE]><script src="http://html5shiv.googlecode.com/svn/trunk/html5.js"></script><![endif]-->
+	
+<!-- Using MathJax, with the delimiters $ -->
+<!-- Conflict with pygments for the .mo and .mi -->
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+  "HTML-CSS": {
+  styles: {
+  ".MathJax .mo, .MathJax .mi": {color: "black ! important"}}
+  },
+  tex2jax: {inlineMath: [['$','$'], ['\\\\(','\\\\)']],processEscapes: true}
+  });
+</script>
+
+<script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML"></script>
+</head>
+</head>
+
+<body id="index" class="home">
+        <header id="banner" class="body">
+                <h1><a href="https://lyncir.github.io/">Lyncir's Blog</a></h1>
+        </header><!-- /#banner -->
+        <nav id="menu"><ul>
+            <li><a href="https://lyncir.github.io/category/db.html">db</a></li>
+            <li><a href="https://lyncir.github.io/category/game-dev.html">game-dev</a></li>
+            <li><a href="https://lyncir.github.io/category/git.html">git</a></li>
+            <li><a href="https://lyncir.github.io/category/linux.html">linux</a></li>
+            <li><a href="https://lyncir.github.io/category/python.html">python</a></li>
+        </ul></nav><!-- /#menu -->
+<section id="content">
+<h2>Articles tagged with profiler</h2>
+
+<ol id="post-list">
+        <li><article class="hentry">
+                <header> <h2 class="entry-title"><a href="https://lyncir.github.io/profiler.html" rel="bookmark" title="Permalink to python性能分析工具">python性能分析工具</a></h2> </header>
+                <footer class="post-info">
+                    <time class="published" datetime="2022-03-08T11:40:00+08:00"> 2022-03-08 11:40:00 </time>
+                    <address class="vcard author">By
+                        <a class="url fn" href="https://lyncir.github.io/author/lyncir.html">lyncir</a>
+                    </address>
+                </footer><!-- /.post-info -->
+                <div class="entry-content"> <div class="section" id="py-spy">
+<h2><a class="reference external" href="https://github.com/benfred/py-spy">py-spy</a></h2>
+<p>比较好用的功能是使用 <tt class="docutils literal">record</tt> 命令生成火焰图</p>
+<div class="highlight"><pre><span></span>$<span class="w"> </span>py-spy<span class="w"> </span>record<span class="w"> </span>-o<span class="w"> </span>profile.svg<span class="w"> </span>--<span class="w"> </span>python<span class="w"> </span>run.py
+</pre></div>
+<object data="images/violy-profile.svg" type="image/svg+xml"></object>
+<p>或者生成 <a class="reference external" href="https://www.speedscope.app/">speedscope</a> 格式进行分析</p>
+<div class="highlight"><pre><span></span>$<span class="w"> </span>py-spy<span class="w"> </span>record<span class="w"> </span>--format<span class="w"> </span>speedscope<span class="w"> </span>-o<span class="w"> </span>profile.speedscope.json<span class="w"> </span>--<span class="w"> </span>python<span class="w"> </span>run.py
+</pre></div>
+</div>
+<div class="section" id="cprofile">
+<h2>cProfile …</h2></div> </div><!-- /.entry-content -->
+        </article></li>
+</ol><!-- /#posts-list -->
+</section><!-- /#content -->
+        <footer id="contentinfo" class="body">
+                <address id="about" class="vcard body">
+                Proudly powered by <a href="https://getpelican.com/">Pelican</a>,
+                which takes great advantage of <a href="https://www.python.org/">Python</a>.
+                </address><!-- /#about -->
+        </footer><!-- /#contentinfo -->
+</body>
+</html>

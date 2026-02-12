@@ -1,0 +1,880 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom"><title>Lyncir's Blog</title><link href="https://lyncir.github.io/" rel="alternate"></link><link href="https://lyncir.github.io/feeds/all.atom.xml" rel="self"></link><id>https://lyncir.github.io/</id><updated>2026-02-12T14:23:00+08:00</updated><entry><title>内存数据库</title><link href="https://lyncir.github.io/memory-database.html" rel="alternate"></link><published>2026-02-12T14:23:00+08:00</published><updated>2026-02-12T14:23:00+08:00</updated><author><name>lyncir</name></author><id>tag:lyncir.github.io,2026-02-12:/memory-database.html</id><summary type="html">&lt;div class="section" id="section-2"&gt;
+&lt;h2&gt;背景&lt;/h2&gt;
+&lt;p&gt;最近在考虑如何使用python实现一个内存数据库来写有状态游戏服务器。
+主要的流程是这样子的:&lt;/p&gt;
+&lt;pre class="literal-block"&gt;
+                +-------------------------------+
+                |           世界服务            |
+                |                               |
++-------+       |   +---------+                 |
+| 队列  | ---&amp;gt;  |   | 业务处 …&lt;/pre&gt;&lt;/div&gt;</summary><content type="html">&lt;div class="section" id="section-2"&gt;
+&lt;h2&gt;背景&lt;/h2&gt;
+&lt;p&gt;最近在考虑如何使用python实现一个内存数据库来写有状态游戏服务器。
+主要的流程是这样子的:&lt;/p&gt;
+&lt;pre class="literal-block"&gt;
+                +-------------------------------+
+                |           世界服务            |
+                |                               |
++-------+       |   +---------+                 |
+| 队列  | ---&amp;gt;  |   | 业务处理|                 |
++-------|       |   +---------+                 |
+                |   +---------+                 |
+                |   | 业务处理|                 |
+                |   +---------+                 |
+                +-------------------------------+
+&lt;/pre&gt;
+&lt;/div&gt;
+&lt;div class="section" id="section-3"&gt;
+&lt;h2&gt;实现&lt;/h2&gt;
+&lt;ol class="arabic simple"&gt;
+&lt;li&gt;Python3.14t(自由线程)&lt;/li&gt;
+&lt;li&gt;PyO3绑定Rust的scc(Scalable Concurrent Containers)&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;示例:&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="kn"&gt;from&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="nn"&gt;pyscc&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="kn"&gt;import&lt;/span&gt; &lt;span class="n"&gt;Database&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;Document&lt;/span&gt;
+
+&lt;span class="c1"&gt;# 创建数据库&lt;/span&gt;
+&lt;span class="n"&gt;db&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;Database&lt;/span&gt;&lt;span class="p"&gt;()&lt;/span&gt;
+
+&lt;span class="c1"&gt;# 获取集合(如果不存在则创建集合)&lt;/span&gt;
+&lt;span class="n"&gt;col&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;db&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;get_collection&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s2"&gt;&amp;quot;User&amp;quot;&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
+
+&lt;span class="c1"&gt;# 为集合创建索引&lt;/span&gt;
+&lt;span class="n"&gt;col&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;create_index&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s2"&gt;&amp;quot;age&amp;quot;&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
+&lt;span class="n"&gt;col&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;create_index&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s2"&gt;&amp;quot;name&amp;quot;&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
+
+&lt;span class="c1"&gt;# 定义文档&lt;/span&gt;
+&lt;span class="n"&gt;doc&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;Document&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="mi"&gt;1&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;name&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="s2"&gt;&amp;quot;a&amp;quot;&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;age&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="mi"&gt;18&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
+&lt;span class="c1"&gt;# 插入文档&lt;/span&gt;
+&lt;span class="n"&gt;col&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;insert&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;doc&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
+
+&lt;span class="n"&gt;doc&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;Document&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="mi"&gt;2&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;name&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="s2"&gt;&amp;quot;b&amp;quot;&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;age&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="mi"&gt;20&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
+&lt;span class="n"&gt;col&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;insert&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;doc&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
+
+&lt;span class="c1"&gt;# 单列查询(&amp;quot;查询名字为a&amp;quot;)&lt;/span&gt;
+&lt;span class="n"&gt;records&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;col&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;find&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s2"&gt;&amp;quot;name&amp;quot;&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="s2"&gt;&amp;quot;a&amp;quot;&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
+&lt;span class="k"&gt;for&lt;/span&gt; &lt;span class="n"&gt;record&lt;/span&gt; &lt;span class="ow"&gt;in&lt;/span&gt; &lt;span class="n"&gt;records&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;
+    &lt;span class="nb"&gt;print&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;record&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;to_dict&lt;/span&gt;&lt;span class="p"&gt;())&lt;/span&gt;
+
+&lt;span class="c1"&gt;# 范围查询(&amp;quot;查询年龄19到20&amp;quot;)&lt;/span&gt;
+&lt;span class="n"&gt;records&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;col&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;find_range&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s2"&gt;&amp;quot;age&amp;quot;&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="mi"&gt;19&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="mi"&gt;20&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
+&lt;span class="k"&gt;for&lt;/span&gt; &lt;span class="n"&gt;r&lt;/span&gt; &lt;span class="ow"&gt;in&lt;/span&gt; &lt;span class="n"&gt;records&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;
+    &lt;span class="nb"&gt;print&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;r&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;to_dict&lt;/span&gt;&lt;span class="p"&gt;())&lt;/span&gt;
+
+&lt;span class="c1"&gt;# 复杂查询(&amp;quot;查询18到20且名字为b&amp;quot;)&lt;/span&gt;
+&lt;span class="n"&gt;filters&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="p"&gt;[&lt;/span&gt;
+    &lt;span class="p"&gt;{&lt;/span&gt;&lt;span class="s2"&gt;&amp;quot;field&amp;quot;&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt; &lt;span class="s2"&gt;&amp;quot;age&amp;quot;&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="s2"&gt;&amp;quot;op&amp;quot;&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt; &lt;span class="s2"&gt;&amp;quot;range&amp;quot;&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="s2"&gt;&amp;quot;min&amp;quot;&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt; &lt;span class="mi"&gt;18&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="s2"&gt;&amp;quot;max&amp;quot;&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt; &lt;span class="mi"&gt;20&lt;/span&gt;&lt;span class="p"&gt;},&lt;/span&gt;
+    &lt;span class="p"&gt;{&lt;/span&gt;&lt;span class="s2"&gt;&amp;quot;field&amp;quot;&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt; &lt;span class="s2"&gt;&amp;quot;name&amp;quot;&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="s2"&gt;&amp;quot;op&amp;quot;&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt; &lt;span class="s2"&gt;&amp;quot;eq&amp;quot;&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="s2"&gt;&amp;quot;value&amp;quot;&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt; &lt;span class="s2"&gt;&amp;quot;b&amp;quot;&lt;/span&gt;&lt;span class="p"&gt;}&lt;/span&gt;
+&lt;span class="p"&gt;]&lt;/span&gt;
+&lt;span class="n"&gt;records&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;col&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;find_complex&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;filters&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;op&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="s2"&gt;&amp;quot;and&amp;quot;&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
+&lt;span class="k"&gt;for&lt;/span&gt; &lt;span class="n"&gt;r&lt;/span&gt; &lt;span class="ow"&gt;in&lt;/span&gt; &lt;span class="n"&gt;records&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;
+    &lt;span class="nb"&gt;print&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;r&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;to_dict&lt;/span&gt;&lt;span class="p"&gt;())&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+&lt;/div&gt;
+</content><category term="game-dev"></category><category term="database"></category></entry><entry><title>2026年目标</title><link href="https://lyncir.github.io/2026-goal.html" rel="alternate"></link><published>2026-01-04T13:20:00+08:00</published><updated>2026-01-04T13:20:00+08:00</updated><author><name>lyncir</name></author><id>tag:lyncir.github.io,2026-01-04:/2026-goal.html</id><summary type="html">&lt;p&gt;2026年上班的第一天，给自己定个小目标:&lt;/p&gt;
+&lt;pre class="literal-block"&gt;
+写一款游戏
+&lt;/pre&gt;
+&lt;p&gt;主要实现核心玩法就行。
+作为一个后端程序员，客户端实现对于我来说 …&lt;/p&gt;</summary><content type="html">&lt;p&gt;2026年上班的第一天，给自己定个小目标:&lt;/p&gt;
+&lt;pre class="literal-block"&gt;
+写一款游戏
+&lt;/pre&gt;
+&lt;p&gt;主要实现核心玩法就行。
+作为一个后端程序员，客户端实现对于我来说太难了！只能慢慢摸索。&lt;/p&gt;
+&lt;p&gt;服务端:&lt;/p&gt;
+&lt;pre class="literal-block"&gt;
+python 3.14
+&lt;/pre&gt;
+&lt;p&gt;客户端:&lt;/p&gt;
+&lt;pre class="literal-block"&gt;
+bevy 0.18.0
+&lt;/pre&gt;
+</content><category term="game-dev"></category><category term="goal"></category></entry><entry><title>SQL排序确定性</title><link href="https://lyncir.github.io/sql-sort-order.html" rel="alternate"></link><published>2024-11-07T17:02:00+08:00</published><updated>2024-11-07T17:02:00+08:00</updated><author><name>lyncir</name></author><id>tag:lyncir.github.io,2024-11-07:/sql-sort-order.html</id><summary type="html">&lt;div class="section" id="section-1"&gt;
+&lt;h2&gt;容易遗忘的规则&lt;/h2&gt;
+&lt;p&gt;关于SQL数据库，无序查询可以按任何顺序返回结果，即`非确定性排序顺序`。每次执行查询时，顺序都无法保 …&lt;/p&gt;&lt;/div&gt;</summary><content type="html">&lt;div class="section" id="section-1"&gt;
+&lt;h2&gt;容易遗忘的规则&lt;/h2&gt;
+&lt;p&gt;关于SQL数据库，无序查询可以按任何顺序返回结果，即`非确定性排序顺序`。每次执行查询时，顺序都无法保证。&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;mysql&amp;gt;&lt;span class="w"&gt; &lt;/span&gt;SELECT&lt;span class="w"&gt; &lt;/span&gt;*&lt;span class="w"&gt; &lt;/span&gt;FROM&lt;span class="w"&gt; &lt;/span&gt;ratings&lt;span class="w"&gt; &lt;/span&gt;ORDER&lt;span class="w"&gt; &lt;/span&gt;BY&lt;span class="w"&gt; &lt;/span&gt;category&lt;span class="p"&gt;;&lt;/span&gt;
++----+----------+--------+
+&lt;span class="p"&gt;|&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;id&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="p"&gt;|&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;category&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="p"&gt;|&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;rating&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="p"&gt;|&lt;/span&gt;
++----+----------+--------+
+&lt;span class="p"&gt;|&lt;/span&gt;&lt;span class="w"&gt;  &lt;/span&gt;&lt;span class="m"&gt;1&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="p"&gt;|&lt;/span&gt;&lt;span class="w"&gt;        &lt;/span&gt;&lt;span class="m"&gt;1&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="p"&gt;|&lt;/span&gt;&lt;span class="w"&gt;    &lt;/span&gt;&lt;span class="m"&gt;4&lt;/span&gt;.5&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="p"&gt;|&lt;/span&gt;
+&lt;span class="p"&gt;|&lt;/span&gt;&lt;span class="w"&gt;  &lt;/span&gt;&lt;span class="m"&gt;5&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="p"&gt;|&lt;/span&gt;&lt;span class="w"&gt;        &lt;/span&gt;&lt;span class="m"&gt;1&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="p"&gt;|&lt;/span&gt;&lt;span class="w"&gt;    &lt;/span&gt;&lt;span class="m"&gt;3&lt;/span&gt;.2&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="p"&gt;|&lt;/span&gt;
+&lt;span class="p"&gt;|&lt;/span&gt;&lt;span class="w"&gt;  &lt;/span&gt;&lt;span class="m"&gt;3&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="p"&gt;|&lt;/span&gt;&lt;span class="w"&gt;        &lt;/span&gt;&lt;span class="m"&gt;2&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="p"&gt;|&lt;/span&gt;&lt;span class="w"&gt;    &lt;/span&gt;&lt;span class="m"&gt;3&lt;/span&gt;.7&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="p"&gt;|&lt;/span&gt;
+&lt;span class="p"&gt;|&lt;/span&gt;&lt;span class="w"&gt;  &lt;/span&gt;&lt;span class="m"&gt;4&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="p"&gt;|&lt;/span&gt;&lt;span class="w"&gt;        &lt;/span&gt;&lt;span class="m"&gt;2&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="p"&gt;|&lt;/span&gt;&lt;span class="w"&gt;    &lt;/span&gt;&lt;span class="m"&gt;3&lt;/span&gt;.5&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="p"&gt;|&lt;/span&gt;
+&lt;span class="p"&gt;|&lt;/span&gt;&lt;span class="w"&gt;  &lt;/span&gt;&lt;span class="m"&gt;6&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="p"&gt;|&lt;/span&gt;&lt;span class="w"&gt;        &lt;/span&gt;&lt;span class="m"&gt;2&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="p"&gt;|&lt;/span&gt;&lt;span class="w"&gt;    &lt;/span&gt;&lt;span class="m"&gt;3&lt;/span&gt;.5&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="p"&gt;|&lt;/span&gt;
+&lt;span class="p"&gt;|&lt;/span&gt;&lt;span class="w"&gt;  &lt;/span&gt;&lt;span class="m"&gt;2&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="p"&gt;|&lt;/span&gt;&lt;span class="w"&gt;        &lt;/span&gt;&lt;span class="m"&gt;3&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="p"&gt;|&lt;/span&gt;&lt;span class="w"&gt;    &lt;/span&gt;&lt;span class="m"&gt;5&lt;/span&gt;.0&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="p"&gt;|&lt;/span&gt;
+&lt;span class="p"&gt;|&lt;/span&gt;&lt;span class="w"&gt;  &lt;/span&gt;&lt;span class="m"&gt;7&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="p"&gt;|&lt;/span&gt;&lt;span class="w"&gt;        &lt;/span&gt;&lt;span class="m"&gt;3&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="p"&gt;|&lt;/span&gt;&lt;span class="w"&gt;    &lt;/span&gt;&lt;span class="m"&gt;2&lt;/span&gt;.7&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="p"&gt;|&lt;/span&gt;
++----+----------+--------+
+&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;以上查询按category列排序，但对于id和rating列是不确定的。&lt;/p&gt;
+&lt;p&gt;如果多次运行此查询，理论上每次都会得到不同顺序的结果。实际上，可能会得到看起来像隐式排序的结果，并且每次运行查询时都会得到一致的结果。&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class="section" id="section-2"&gt;
+&lt;h2&gt;总结&lt;/h2&gt;
+&lt;p&gt;在不同的MySQL版本中，由于隐式排序逻辑的不一致，导致返回的结果顺序有可能不一致。但同一版本中是一致的(不要依赖它)。&lt;/p&gt;
+&lt;p&gt;因此，如果返回顺序结果很重要，请使用`确定性排序顺序`查询。&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;mysql&amp;gt;&lt;span class="w"&gt; &lt;/span&gt;SELECT&lt;span class="w"&gt; &lt;/span&gt;*&lt;span class="w"&gt; &lt;/span&gt;FROM&lt;span class="w"&gt; &lt;/span&gt;ratings&lt;span class="w"&gt; &lt;/span&gt;ORDER&lt;span class="w"&gt; &lt;/span&gt;BY&lt;span class="w"&gt; &lt;/span&gt;category,&lt;span class="w"&gt; &lt;/span&gt;id&lt;span class="p"&gt;;&lt;/span&gt;
++----+----------+--------+
+&lt;span class="p"&gt;|&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;id&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="p"&gt;|&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;category&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="p"&gt;|&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;rating&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="p"&gt;|&lt;/span&gt;
++----+----------+--------+
+&lt;span class="p"&gt;|&lt;/span&gt;&lt;span class="w"&gt;  &lt;/span&gt;&lt;span class="m"&gt;1&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="p"&gt;|&lt;/span&gt;&lt;span class="w"&gt;        &lt;/span&gt;&lt;span class="m"&gt;1&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="p"&gt;|&lt;/span&gt;&lt;span class="w"&gt;    &lt;/span&gt;&lt;span class="m"&gt;4&lt;/span&gt;.5&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="p"&gt;|&lt;/span&gt;
+&lt;span class="p"&gt;|&lt;/span&gt;&lt;span class="w"&gt;  &lt;/span&gt;&lt;span class="m"&gt;5&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="p"&gt;|&lt;/span&gt;&lt;span class="w"&gt;        &lt;/span&gt;&lt;span class="m"&gt;1&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="p"&gt;|&lt;/span&gt;&lt;span class="w"&gt;    &lt;/span&gt;&lt;span class="m"&gt;3&lt;/span&gt;.2&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="p"&gt;|&lt;/span&gt;
+&lt;span class="p"&gt;|&lt;/span&gt;&lt;span class="w"&gt;  &lt;/span&gt;&lt;span class="m"&gt;3&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="p"&gt;|&lt;/span&gt;&lt;span class="w"&gt;        &lt;/span&gt;&lt;span class="m"&gt;2&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="p"&gt;|&lt;/span&gt;&lt;span class="w"&gt;    &lt;/span&gt;&lt;span class="m"&gt;3&lt;/span&gt;.7&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="p"&gt;|&lt;/span&gt;
+&lt;span class="p"&gt;|&lt;/span&gt;&lt;span class="w"&gt;  &lt;/span&gt;&lt;span class="m"&gt;4&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="p"&gt;|&lt;/span&gt;&lt;span class="w"&gt;        &lt;/span&gt;&lt;span class="m"&gt;2&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="p"&gt;|&lt;/span&gt;&lt;span class="w"&gt;    &lt;/span&gt;&lt;span class="m"&gt;3&lt;/span&gt;.5&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="p"&gt;|&lt;/span&gt;
+&lt;span class="p"&gt;|&lt;/span&gt;&lt;span class="w"&gt;  &lt;/span&gt;&lt;span class="m"&gt;6&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="p"&gt;|&lt;/span&gt;&lt;span class="w"&gt;        &lt;/span&gt;&lt;span class="m"&gt;2&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="p"&gt;|&lt;/span&gt;&lt;span class="w"&gt;    &lt;/span&gt;&lt;span class="m"&gt;3&lt;/span&gt;.5&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="p"&gt;|&lt;/span&gt;
+&lt;span class="p"&gt;|&lt;/span&gt;&lt;span class="w"&gt;  &lt;/span&gt;&lt;span class="m"&gt;2&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="p"&gt;|&lt;/span&gt;&lt;span class="w"&gt;        &lt;/span&gt;&lt;span class="m"&gt;3&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="p"&gt;|&lt;/span&gt;&lt;span class="w"&gt;    &lt;/span&gt;&lt;span class="m"&gt;5&lt;/span&gt;.0&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="p"&gt;|&lt;/span&gt;
+&lt;span class="p"&gt;|&lt;/span&gt;&lt;span class="w"&gt;  &lt;/span&gt;&lt;span class="m"&gt;7&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="p"&gt;|&lt;/span&gt;&lt;span class="w"&gt;        &lt;/span&gt;&lt;span class="m"&gt;3&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="p"&gt;|&lt;/span&gt;&lt;span class="w"&gt;    &lt;/span&gt;&lt;span class="m"&gt;2&lt;/span&gt;.7&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="p"&gt;|&lt;/span&gt;
++----+----------+--------+
+&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;Ref: &lt;a class="reference external" href="https://dev.mysql.com/doc/refman/8.0/en/limit-optimization.html"&gt;LIMIT Query Optimization&lt;/a&gt;&lt;/p&gt;
+&lt;/div&gt;
+</content><category term="db"></category><category term="mysql"></category></entry><entry><title>Git常用命令</title><link href="https://lyncir.github.io/git.html" rel="alternate"></link><published>2023-08-28T09:43:00+08:00</published><updated>2023-08-28T09:43:00+08:00</updated><author><name>lyncir</name></author><id>tag:lyncir.github.io,2023-08-28:/git.html</id><summary type="html">&lt;div class="section" id="git-config"&gt;
+&lt;h2&gt;Git Config&lt;/h2&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="c1"&gt;# 显示更美观&lt;/span&gt;
+&lt;span class="nv"&gt;ll&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;log&lt;span class="w"&gt; &lt;/span&gt;--graph&lt;span class="w"&gt; &lt;/span&gt;--pretty&lt;span class="o"&gt;=&lt;/span&gt;format:&lt;span class="s1"&gt;&amp;#39;%C(yellow)%h%Creset -%C(cyan)%d%Creset %s %Cgreen(%an, %cr)&amp;#39;&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;--abbrev-commit
+
+
+&lt;span class="c1"&gt;# 显示unicode文件名&lt;/span&gt;
+$&lt;span class="w"&gt; &lt;/span&gt;git&lt;span class="w"&gt; &lt;/span&gt;config&lt;span class="w"&gt; &lt;/span&gt;--global&lt;span class="w"&gt; &lt;/span&gt;core.quotePath&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="nb"&gt;false&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class="section" id="git-use"&gt;
+&lt;h2&gt;Git Use&lt;/h2&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="m"&gt;1&lt;/span&gt;.&lt;span class="w"&gt; &lt;/span&gt;查看commit&lt;span class="w"&gt; &lt;/span&gt;log中的修改
+$&lt;span class="w"&gt; &lt;/span&gt;git&lt;span class="w"&gt; &lt;/span&gt;ll …&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;</summary><content type="html">&lt;div class="section" id="git-config"&gt;
+&lt;h2&gt;Git Config&lt;/h2&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="c1"&gt;# 显示更美观&lt;/span&gt;
+&lt;span class="nv"&gt;ll&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;log&lt;span class="w"&gt; &lt;/span&gt;--graph&lt;span class="w"&gt; &lt;/span&gt;--pretty&lt;span class="o"&gt;=&lt;/span&gt;format:&lt;span class="s1"&gt;&amp;#39;%C(yellow)%h%Creset -%C(cyan)%d%Creset %s %Cgreen(%an, %cr)&amp;#39;&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;--abbrev-commit
+
+
+&lt;span class="c1"&gt;# 显示unicode文件名&lt;/span&gt;
+$&lt;span class="w"&gt; &lt;/span&gt;git&lt;span class="w"&gt; &lt;/span&gt;config&lt;span class="w"&gt; &lt;/span&gt;--global&lt;span class="w"&gt; &lt;/span&gt;core.quotePath&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="nb"&gt;false&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class="section" id="git-use"&gt;
+&lt;h2&gt;Git Use&lt;/h2&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="m"&gt;1&lt;/span&gt;.&lt;span class="w"&gt; &lt;/span&gt;查看commit&lt;span class="w"&gt; &lt;/span&gt;log中的修改
+$&lt;span class="w"&gt; &lt;/span&gt;git&lt;span class="w"&gt; &lt;/span&gt;ll&lt;span class="w"&gt; &lt;/span&gt;-p
+
+&lt;span class="m"&gt;2&lt;/span&gt;.&lt;span class="w"&gt; &lt;/span&gt;git生产patch和使用patch
+$&lt;span class="w"&gt; &lt;/span&gt;git&lt;span class="w"&gt; &lt;/span&gt;diff&lt;span class="w"&gt; &lt;/span&gt;&amp;gt;&lt;span class="w"&gt; &lt;/span&gt;/tmp/patch.txt
+$&lt;span class="w"&gt; &lt;/span&gt;git&lt;span class="w"&gt; &lt;/span&gt;apply&lt;span class="w"&gt; &lt;/span&gt;/tmp/patch.txt
+
+&lt;span class="m"&gt;3&lt;/span&gt;.&lt;span class="w"&gt; &lt;/span&gt;查看消失的log并撤销rebase
+&lt;span class="c1"&gt;# undo git rebase&lt;/span&gt;
+$&lt;span class="w"&gt; &lt;/span&gt;git&lt;span class="w"&gt; &lt;/span&gt;reflog
+$&lt;span class="w"&gt; &lt;/span&gt;git&lt;span class="w"&gt; &lt;/span&gt;reset&lt;span class="w"&gt; &lt;/span&gt;--hard&lt;span class="w"&gt; &lt;/span&gt;HEAD@&lt;span class="o"&gt;{&lt;/span&gt;&lt;span class="m"&gt;5&lt;/span&gt;&lt;span class="o"&gt;}&lt;/span&gt;
+
+&lt;span class="m"&gt;4&lt;/span&gt;.&lt;span class="w"&gt; &lt;/span&gt;撤销未提交的更改
+&lt;span class="c1"&gt;# show what will be deleted&lt;/span&gt;
+$&lt;span class="w"&gt; &lt;/span&gt;git&lt;span class="w"&gt; &lt;/span&gt;clean&lt;span class="w"&gt; &lt;/span&gt;-n
+
+&lt;span class="c1"&gt;# To remove directories&lt;/span&gt;
+$&lt;span class="w"&gt; &lt;/span&gt;git&lt;span class="w"&gt; &lt;/span&gt;clean&lt;span class="w"&gt; &lt;/span&gt;-f&lt;span class="w"&gt; &lt;/span&gt;-d
+
+&lt;span class="c1"&gt;# To remove ignored files&lt;/span&gt;
+$&lt;span class="w"&gt; &lt;/span&gt;git&lt;span class="w"&gt; &lt;/span&gt;clean&lt;span class="w"&gt; &lt;/span&gt;-f&lt;span class="w"&gt; &lt;/span&gt;-X
+
+&lt;span class="c1"&gt;# To remove ignored and non-ignored files&lt;/span&gt;
+$&lt;span class="w"&gt; &lt;/span&gt;git&lt;span class="w"&gt; &lt;/span&gt;clean&lt;span class="w"&gt; &lt;/span&gt;-f&lt;span class="w"&gt; &lt;/span&gt;-x
+
+&lt;span class="m"&gt;5&lt;/span&gt;.&lt;span class="w"&gt; &lt;/span&gt;对上一次的提交做修改
+$&lt;span class="w"&gt; &lt;/span&gt;git&lt;span class="w"&gt; &lt;/span&gt;commit&lt;span class="w"&gt; &lt;/span&gt;--amend&lt;span class="w"&gt; &lt;/span&gt;-am&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="s2"&gt;&amp;quot;test&amp;quot;&lt;/span&gt;
+
+&lt;span class="m"&gt;6&lt;/span&gt;.&lt;span class="w"&gt; &lt;/span&gt;查看已提交的diff
+$&lt;span class="w"&gt; &lt;/span&gt;git&lt;span class="w"&gt; &lt;/span&gt;diff&lt;span class="w"&gt; &lt;/span&gt;COMMIT^!
+
+&lt;span class="m"&gt;7&lt;/span&gt;.&lt;span class="w"&gt; &lt;/span&gt;撤销merge
+$&lt;span class="w"&gt; &lt;/span&gt;git&lt;span class="w"&gt; &lt;/span&gt;checkout&lt;span class="w"&gt; &lt;/span&gt;&amp;lt;merge所在的分支&amp;gt;
+$&lt;span class="w"&gt; &lt;/span&gt;git&lt;span class="w"&gt; &lt;/span&gt;reset&lt;span class="w"&gt; &lt;/span&gt;--hard&lt;span class="w"&gt; &lt;/span&gt;HEAD~1
+
+&lt;span class="m"&gt;8&lt;/span&gt;.&lt;span class="w"&gt; &lt;/span&gt;撤销某次提交
+$&lt;span class="w"&gt; &lt;/span&gt;git&lt;span class="w"&gt; &lt;/span&gt;revert&lt;span class="w"&gt; &lt;/span&gt;--strategy&lt;span class="w"&gt; &lt;/span&gt;resolve&lt;span class="w"&gt; &lt;/span&gt;&amp;lt;commit&amp;gt;
+
+&lt;span class="m"&gt;9&lt;/span&gt;.&lt;span class="w"&gt; &lt;/span&gt;批量删除本地分支
+$&lt;span class="w"&gt; &lt;/span&gt;git&lt;span class="w"&gt; &lt;/span&gt;branch&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="p"&gt;|&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;grep&lt;span class="w"&gt; &lt;/span&gt;-v&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="s2"&gt;&amp;quot;feature/xxx&amp;quot;&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="p"&gt;|&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;grep&lt;span class="w"&gt; &lt;/span&gt;-v&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="s2"&gt;&amp;quot;yyy&amp;quot;&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="p"&gt;|&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;xargs&lt;span class="w"&gt; &lt;/span&gt;git&lt;span class="w"&gt; &lt;/span&gt;branch&lt;span class="w"&gt; &lt;/span&gt;-d
+
+&lt;span class="m"&gt;10&lt;/span&gt;.&lt;span class="w"&gt; &lt;/span&gt;撤销comit
+$&lt;span class="w"&gt; &lt;/span&gt;git&lt;span class="w"&gt; &lt;/span&gt;reset&lt;span class="w"&gt; &lt;/span&gt;--soft&lt;span class="w"&gt; &lt;/span&gt;HEAD^
+
+&lt;span class="m"&gt;11&lt;/span&gt;.&lt;span class="w"&gt; &lt;/span&gt;撤销add
+$&lt;span class="w"&gt; &lt;/span&gt;git&lt;span class="w"&gt; &lt;/span&gt;reset&lt;span class="w"&gt; &lt;/span&gt;HEAD&lt;span class="w"&gt; &lt;/span&gt;.
+&lt;/pre&gt;&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class="section" id="section-1"&gt;
+&lt;h2&gt;项目开发流程&lt;/h2&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="c1"&gt;# 获取主干最新代码&lt;/span&gt;
+$&lt;span class="w"&gt; &lt;/span&gt;git&lt;span class="w"&gt; &lt;/span&gt;clone&lt;span class="w"&gt; &lt;/span&gt;&amp;lt;repo&amp;gt;
+$&lt;span class="w"&gt; &lt;/span&gt;git&lt;span class="w"&gt; &lt;/span&gt;checkout&lt;span class="w"&gt; &lt;/span&gt;develop&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="c1"&gt;# 开发分支&lt;/span&gt;
+$&lt;span class="w"&gt; &lt;/span&gt;git&lt;span class="w"&gt; &lt;/span&gt;pull&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="c1"&gt;# 同步分支&lt;/span&gt;
+
+&lt;span class="c1"&gt;# 新建一个开发分支my_feature&lt;/span&gt;
+$&lt;span class="w"&gt; &lt;/span&gt;git&lt;span class="w"&gt; &lt;/span&gt;checkout&lt;span class="w"&gt; &lt;/span&gt;-b&lt;span class="w"&gt; &lt;/span&gt;feature/my_feature
+
+&lt;span class="c1"&gt;# 确认已切换到当前分支&lt;/span&gt;
+$&lt;span class="w"&gt; &lt;/span&gt;git&lt;span class="w"&gt; &lt;/span&gt;branch
+
+&lt;span class="c1"&gt;# 保存所有的修改变化&lt;/span&gt;
+$&lt;span class="w"&gt; &lt;/span&gt;git&lt;span class="w"&gt; &lt;/span&gt;add&lt;span class="w"&gt; &lt;/span&gt;--all
+&lt;span class="c1"&gt;# 查看发生变动的文件&lt;/span&gt;
+$&lt;span class="w"&gt; &lt;/span&gt;git&lt;span class="w"&gt; &lt;/span&gt;status
+
+&lt;span class="c1"&gt;# 编辑备注&lt;/span&gt;
+$&lt;span class="w"&gt; &lt;/span&gt;git&lt;span class="w"&gt; &lt;/span&gt;commit&lt;span class="w"&gt; &lt;/span&gt;-m&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="s2"&gt;&amp;quot;implement api architecture&amp;quot;&lt;/span&gt;
+&lt;span class="c1"&gt;# 将分支代码push到服务器&lt;/span&gt;
+$&lt;span class="w"&gt; &lt;/span&gt;git&lt;span class="w"&gt; &lt;/span&gt;push&lt;span class="w"&gt; &lt;/span&gt;origin&lt;span class="w"&gt; &lt;/span&gt;-u&lt;span class="w"&gt; &lt;/span&gt;feature/my_feature
+
+&lt;span class="c1"&gt;# 分支开发过程中，为了减少冲突，尽量要多与主干同步&lt;/span&gt;
+$&lt;span class="w"&gt; &lt;/span&gt;git&lt;span class="w"&gt; &lt;/span&gt;fetch&lt;span class="w"&gt; &lt;/span&gt;origin
+$&lt;span class="w"&gt; &lt;/span&gt;git&lt;span class="w"&gt; &lt;/span&gt;rebase&lt;span class="w"&gt; &lt;/span&gt;origin/develop
+$&lt;span class="w"&gt; &lt;/span&gt;git&lt;span class="w"&gt; &lt;/span&gt;add&lt;span class="w"&gt; &lt;/span&gt;.&lt;span class="w"&gt;  &lt;/span&gt;&lt;span class="c1"&gt;# 解决冲突后add&lt;/span&gt;
+$&lt;span class="w"&gt; &lt;/span&gt;git&lt;span class="w"&gt; &lt;/span&gt;rebase&lt;span class="w"&gt; &lt;/span&gt;--continue
+
+&lt;span class="c1"&gt;#删除分支&lt;/span&gt;
+$&lt;span class="w"&gt; &lt;/span&gt;git&lt;span class="w"&gt; &lt;/span&gt;branch&lt;span class="w"&gt; &lt;/span&gt;-d&lt;span class="w"&gt; &lt;/span&gt;feature/my_feature
+
+&lt;span class="c1"&gt;#取消commit&lt;/span&gt;
+$&lt;span class="w"&gt; &lt;/span&gt;git&lt;span class="w"&gt; &lt;/span&gt;reset&lt;span class="w"&gt; &lt;/span&gt;--hard&lt;span class="w"&gt; &lt;/span&gt;&amp;lt;commit&lt;span class="w"&gt; &lt;/span&gt;log&amp;gt;
+&lt;/pre&gt;&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class="section" id="git-1"&gt;
+&lt;h2&gt;git 存储验证&lt;/h2&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;$&lt;span class="w"&gt; &lt;/span&gt;git&lt;span class="w"&gt; &lt;/span&gt;config&lt;span class="w"&gt; &lt;/span&gt;--global&lt;span class="w"&gt; &lt;/span&gt;credential.helper&lt;span class="w"&gt; &lt;/span&gt;wincred
+&lt;/pre&gt;&lt;/div&gt;
+&lt;/div&gt;
+</content><category term="git"></category><category term="git"></category></entry><entry><title>安装Solar2D</title><link href="https://lyncir.github.io/solar2d_on_devuan_4.0.html" rel="alternate"></link><published>2022-08-23T15:27:00+08:00</published><updated>2022-08-23T15:27:00+08:00</updated><author><name>lyncir</name></author><id>tag:lyncir.github.io,2022-08-23:/solar2d_on_devuan_4.0.html</id><summary type="html">&lt;div class="section" id="section-1"&gt;
+&lt;h2&gt;要求&lt;/h2&gt;
+&lt;ul class="simple"&gt;
+&lt;li&gt;Devuan 4.0系统&lt;/li&gt;
+&lt;li&gt;PlayOnLinux&lt;/li&gt;
+&lt;li&gt;Solar2D-Windows-2022.3677.msi&lt;/li&gt;
+&lt;li&gt;Wine(x86) 7.11&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/div&gt;
+&lt;div class="section" id="playonlinux"&gt;
+&lt;h2&gt;安装PlayOnLinux&lt;/h2&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;$&lt;span class="w"&gt; &lt;/span&gt;sudo&lt;span class="w"&gt; &lt;/span&gt;apt&lt;span class="w"&gt; &lt;/span&gt;install&lt;span class="w"&gt; &lt;/span&gt;playonlinux
+&lt;/pre&gt;&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class="section" id="wine"&gt;
+&lt;h2&gt;安装wine&lt;/h2&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;$&lt;span class="w"&gt; &lt;/span&gt;sudo&lt;span class="w"&gt; &lt;/span&gt;apt&lt;span class="w"&gt; &lt;/span&gt;install&lt;span class="w"&gt; &lt;/span&gt;wine32
+&lt;/pre&gt;&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class="section" id="solar2d-1"&gt;
+&lt;h2&gt;安装Solar2D&lt;/h2&gt;
+&lt;ul class="simple"&gt;
+&lt;li&gt;打开PlayOnLinux, &lt;strong&gt;Tools&lt;/strong&gt; -&amp;gt;  &lt;strong&gt;Manage Wine Versions&lt;/strong&gt;&lt;/li&gt;
+&lt;li&gt;选择安装最新的Wine(x86), 当前 …&lt;/li&gt;&lt;/ul&gt;&lt;/div&gt;</summary><content type="html">&lt;div class="section" id="section-1"&gt;
+&lt;h2&gt;要求&lt;/h2&gt;
+&lt;ul class="simple"&gt;
+&lt;li&gt;Devuan 4.0系统&lt;/li&gt;
+&lt;li&gt;PlayOnLinux&lt;/li&gt;
+&lt;li&gt;Solar2D-Windows-2022.3677.msi&lt;/li&gt;
+&lt;li&gt;Wine(x86) 7.11&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/div&gt;
+&lt;div class="section" id="playonlinux"&gt;
+&lt;h2&gt;安装PlayOnLinux&lt;/h2&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;$&lt;span class="w"&gt; &lt;/span&gt;sudo&lt;span class="w"&gt; &lt;/span&gt;apt&lt;span class="w"&gt; &lt;/span&gt;install&lt;span class="w"&gt; &lt;/span&gt;playonlinux
+&lt;/pre&gt;&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class="section" id="wine"&gt;
+&lt;h2&gt;安装wine&lt;/h2&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;$&lt;span class="w"&gt; &lt;/span&gt;sudo&lt;span class="w"&gt; &lt;/span&gt;apt&lt;span class="w"&gt; &lt;/span&gt;install&lt;span class="w"&gt; &lt;/span&gt;wine32
+&lt;/pre&gt;&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class="section" id="solar2d-1"&gt;
+&lt;h2&gt;安装Solar2D&lt;/h2&gt;
+&lt;ul class="simple"&gt;
+&lt;li&gt;打开PlayOnLinux, &lt;strong&gt;Tools&lt;/strong&gt; -&amp;gt;  &lt;strong&gt;Manage Wine Versions&lt;/strong&gt;&lt;/li&gt;
+&lt;li&gt;选择安装最新的Wine(x86), 当前是 &lt;strong&gt;7.11&lt;/strong&gt;&lt;/li&gt;
+&lt;li&gt;主界面 -&amp;gt; &lt;strong&gt;Install&lt;/strong&gt; -&amp;gt; &lt;strong&gt;Install a non-listed program&lt;/strong&gt; [底部] -&amp;gt; Next&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Install a program in a new virtual drive&lt;/strong&gt; -&amp;gt; Next&lt;/li&gt;
+&lt;li&gt;输入名字: &lt;strong&gt;Solar2D&lt;/strong&gt; -&amp;gt; Next&lt;/li&gt;
+&lt;li&gt;选择: &lt;strong&gt;Install some libraries&lt;/strong&gt; -&amp;gt; Next&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;32 bits windows installation&lt;/strong&gt; -&amp;gt; Next&lt;/li&gt;
+&lt;li&gt;选择这些库安装: &lt;strong&gt;POL-install-corefonts&lt;/strong&gt;, &lt;strong&gt;POL-install-vcrun2013&lt;/strong&gt; 和 &lt;strong&gt;POL-install-wmp10&lt;/strong&gt; -&amp;gt; Next&lt;/li&gt;
+&lt;li&gt;点击 &lt;strong&gt;Browse&lt;/strong&gt;, 选择 &lt;strong&gt;MSI&lt;/strong&gt; 文件 -&amp;gt; Next&lt;/li&gt;
+&lt;li&gt;和在Windows一样进行安装. 不要修改路径. 安装完后不启动! -&amp;gt; Finish&lt;/li&gt;
+&lt;li&gt;从列表中选择: &lt;strong&gt;Corona Simulator.exe&lt;/strong&gt; -&amp;gt; Next&lt;/li&gt;
+&lt;li&gt;Next&lt;/li&gt;
+&lt;li&gt;选择 &lt;strong&gt;I don't want to make another shortcut&lt;/strong&gt; -&amp;gt; Next&lt;/li&gt;
+&lt;li&gt;完成&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/div&gt;
+</content><category term="linux"></category><category term="solar2d"></category></entry><entry><title>Godot 笔记</title><link href="https://lyncir.github.io/godot-study.html" rel="alternate"></link><published>2022-07-19T17:09:00+08:00</published><updated>2022-07-19T17:09:00+08:00</updated><author><name>lyncir</name></author><id>tag:lyncir.github.io,2022-07-19:/godot-study.html</id><summary type="html">&lt;p&gt;代码基于Godot 4.0&lt;/p&gt;
+&lt;div class="section" id="gdscript"&gt;
+&lt;h2&gt;GdScript脚本&lt;/h2&gt;
+&lt;p&gt;类似Python&lt;/p&gt;
+&lt;p&gt;示例:&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="c1"&gt;# 一个文件就是一个类&lt;/span&gt;
+
+&lt;span class="c1"&gt;# 继承&lt;/span&gt;
+
+&lt;span class="n"&gt;extends&lt;/span&gt; &lt;span class="n"&gt;BaseClass&lt;/span&gt;
+
+&lt;span class="c1"&gt;# (可选) 可自定义图标的类定义&lt;/span&gt;
+
+&lt;span class="n"&gt;class_name&lt;/span&gt; &lt;span class="n"&gt;MyClass&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="s2"&gt;&amp;quot;res://path/to/optional/icon.svg&amp;quot;&lt;/span&gt;
+
+
+&lt;span class="c1"&gt;# 成 …&lt;/span&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;</summary><content type="html">&lt;p&gt;代码基于Godot 4.0&lt;/p&gt;
+&lt;div class="section" id="gdscript"&gt;
+&lt;h2&gt;GdScript脚本&lt;/h2&gt;
+&lt;p&gt;类似Python&lt;/p&gt;
+&lt;p&gt;示例:&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="c1"&gt;# 一个文件就是一个类&lt;/span&gt;
+
+&lt;span class="c1"&gt;# 继承&lt;/span&gt;
+
+&lt;span class="n"&gt;extends&lt;/span&gt; &lt;span class="n"&gt;BaseClass&lt;/span&gt;
+
+&lt;span class="c1"&gt;# (可选) 可自定义图标的类定义&lt;/span&gt;
+
+&lt;span class="n"&gt;class_name&lt;/span&gt; &lt;span class="n"&gt;MyClass&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="s2"&gt;&amp;quot;res://path/to/optional/icon.svg&amp;quot;&lt;/span&gt;
+
+
+&lt;span class="c1"&gt;# 成员变量&lt;/span&gt;
+
+&lt;span class="n"&gt;var&lt;/span&gt; &lt;span class="n"&gt;a&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="mi"&gt;5&lt;/span&gt;
+&lt;span class="n"&gt;var&lt;/span&gt; &lt;span class="n"&gt;s&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="s2"&gt;&amp;quot;Hello&amp;quot;&lt;/span&gt;
+&lt;span class="n"&gt;var&lt;/span&gt; &lt;span class="n"&gt;arr&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="p"&gt;[&lt;/span&gt;&lt;span class="mi"&gt;1&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="mi"&gt;2&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="mi"&gt;3&lt;/span&gt;&lt;span class="p"&gt;]&lt;/span&gt;
+&lt;span class="n"&gt;var&lt;/span&gt; &lt;span class="nb"&gt;dict&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt;&lt;span class="s2"&gt;&amp;quot;key&amp;quot;&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt; &lt;span class="s2"&gt;&amp;quot;value&amp;quot;&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="mi"&gt;2&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt; &lt;span class="mi"&gt;3&lt;/span&gt;&lt;span class="p"&gt;}&lt;/span&gt;
+&lt;span class="n"&gt;var&lt;/span&gt; &lt;span class="n"&gt;typed_var&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt; &lt;span class="nb"&gt;int&lt;/span&gt;
+&lt;span class="n"&gt;var&lt;/span&gt; &lt;span class="n"&gt;inferred_type&lt;/span&gt; &lt;span class="o"&gt;:=&lt;/span&gt; &lt;span class="s2"&gt;&amp;quot;String&amp;quot;&lt;/span&gt;
+
+&lt;span class="c1"&gt;# 常数&lt;/span&gt;
+
+&lt;span class="n"&gt;const&lt;/span&gt; &lt;span class="n"&gt;ANSWER&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="mi"&gt;42&lt;/span&gt;
+&lt;span class="n"&gt;const&lt;/span&gt; &lt;span class="n"&gt;THE_NAME&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="s2"&gt;&amp;quot;Charly&amp;quot;&lt;/span&gt;
+
+&lt;span class="c1"&gt;# 枚举&lt;/span&gt;
+
+&lt;span class="n"&gt;enum&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt;&lt;span class="n"&gt;UNIT_NEUTRAL&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;UNIT_ENEMY&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;UNIT_ALLY&lt;/span&gt;&lt;span class="p"&gt;}&lt;/span&gt;
+&lt;span class="n"&gt;enum&lt;/span&gt; &lt;span class="n"&gt;Named&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt;&lt;span class="n"&gt;THING_1&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;THING_2&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;ANOTHER_THING&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="o"&gt;-&lt;/span&gt;&lt;span class="mi"&gt;1&lt;/span&gt;&lt;span class="p"&gt;}&lt;/span&gt;
+
+&lt;span class="c1"&gt;# 内建向量类型&lt;/span&gt;
+
+&lt;span class="n"&gt;var&lt;/span&gt; &lt;span class="n"&gt;v2&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;Vector2&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="mi"&gt;1&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="mi"&gt;2&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
+&lt;span class="n"&gt;var&lt;/span&gt; &lt;span class="n"&gt;v3&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;Vector3&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="mi"&gt;1&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="mi"&gt;2&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="mi"&gt;3&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
+
+
+&lt;span class="c1"&gt;# 函数&lt;/span&gt;
+
+&lt;span class="n"&gt;func&lt;/span&gt; &lt;span class="n"&gt;some_function&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;param1&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;param2&lt;/span&gt;&lt;span class="p"&gt;):&lt;/span&gt;
+    &lt;span class="n"&gt;var&lt;/span&gt; &lt;span class="n"&gt;local_var&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="mi"&gt;5&lt;/span&gt;
+
+    &lt;span class="k"&gt;if&lt;/span&gt; &lt;span class="n"&gt;param1&lt;/span&gt; &lt;span class="o"&gt;&amp;lt;&lt;/span&gt; &lt;span class="n"&gt;local_var&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;
+        &lt;span class="nb"&gt;print&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;param1&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
+    &lt;span class="k"&gt;elif&lt;/span&gt; &lt;span class="n"&gt;param2&lt;/span&gt; &lt;span class="o"&gt;&amp;gt;&lt;/span&gt; &lt;span class="mi"&gt;5&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;
+        &lt;span class="nb"&gt;print&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;param2&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
+    &lt;span class="k"&gt;else&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;
+        &lt;span class="nb"&gt;print&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s2"&gt;&amp;quot;Fail!&amp;quot;&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
+
+    &lt;span class="k"&gt;for&lt;/span&gt; &lt;span class="n"&gt;i&lt;/span&gt; &lt;span class="ow"&gt;in&lt;/span&gt; &lt;span class="nb"&gt;range&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="mi"&gt;20&lt;/span&gt;&lt;span class="p"&gt;):&lt;/span&gt;
+        &lt;span class="nb"&gt;print&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;i&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
+
+    &lt;span class="k"&gt;while&lt;/span&gt; &lt;span class="n"&gt;param2&lt;/span&gt; &lt;span class="o"&gt;!=&lt;/span&gt; &lt;span class="mi"&gt;0&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;
+        &lt;span class="n"&gt;param2&lt;/span&gt; &lt;span class="o"&gt;-=&lt;/span&gt; &lt;span class="mi"&gt;1&lt;/span&gt;
+
+    &lt;span class="n"&gt;var&lt;/span&gt; &lt;span class="n"&gt;local_var2&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;param1&lt;/span&gt; &lt;span class="o"&gt;+&lt;/span&gt; &lt;span class="mi"&gt;3&lt;/span&gt;
+    &lt;span class="k"&gt;return&lt;/span&gt; &lt;span class="n"&gt;local_var2&lt;/span&gt;
+
+
+&lt;span class="c1"&gt;# 重写父级函数,如果要调用父级函数,可以使用&amp;#39;.&amp;#39;, 就像python的super&lt;/span&gt;
+
+&lt;span class="n"&gt;func&lt;/span&gt; &lt;span class="n"&gt;something&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;p1&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;p2&lt;/span&gt;&lt;span class="p"&gt;):&lt;/span&gt;
+    &lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;something&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;p1&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;p2&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
+
+
+&lt;span class="c1"&gt;# 内类&lt;/span&gt;
+
+&lt;span class="k"&gt;class&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="nc"&gt;Something&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;
+    &lt;span class="n"&gt;var&lt;/span&gt; &lt;span class="n"&gt;a&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="mi"&gt;10&lt;/span&gt;
+
+
+&lt;span class="c1"&gt;# 构造函数&lt;/span&gt;
+
+&lt;span class="n"&gt;func&lt;/span&gt; &lt;span class="n"&gt;_init&lt;/span&gt;&lt;span class="p"&gt;():&lt;/span&gt;
+    &lt;span class="nb"&gt;print&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s2"&gt;&amp;quot;Constructed!&amp;quot;&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
+    &lt;span class="n"&gt;var&lt;/span&gt; &lt;span class="n"&gt;lv&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;Something&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;new&lt;/span&gt;&lt;span class="p"&gt;()&lt;/span&gt;
+    &lt;span class="nb"&gt;print&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;lv&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;a&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;关键字(只列出部分):&lt;/p&gt;
+&lt;table border="1" class="docutils"&gt;
+&lt;colgroup&gt;
+&lt;col width="17%" /&gt;
+&lt;col width="83%" /&gt;
+&lt;/colgroup&gt;
+&lt;thead valign="bottom"&gt;
+&lt;tr&gt;&lt;th class="head"&gt;关键字&lt;/th&gt;
+&lt;th class="head"&gt;描述&lt;/th&gt;
+&lt;/tr&gt;
+&lt;/thead&gt;
+&lt;tbody valign="top"&gt;
+&lt;tr&gt;&lt;td&gt;match&lt;/td&gt;
+&lt;td&gt;用于分支程序的执行&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;&lt;td&gt;class_name&lt;/td&gt;
+&lt;td&gt;为脚本定义类名称和可选图标&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;&lt;td&gt;extends&lt;/td&gt;
+&lt;td&gt;定义用当前类扩展什么类&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;&lt;td&gt;as&lt;/td&gt;
+&lt;td&gt;如果可能, 将值转换为给定类型&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;&lt;td&gt;self&lt;/td&gt;
+&lt;td&gt;引用当前类实例&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;&lt;td&gt;tool&lt;/td&gt;
+&lt;td&gt;在编辑器中执行脚本&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;&lt;td&gt;signal&lt;/td&gt;
+&lt;td&gt;定义信号&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;&lt;td&gt;onready&lt;/td&gt;
+&lt;td&gt;一旦脚本附加到的节点及其子级成为场景树的一部分, 就初始化变量&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;&lt;td&gt;export&lt;/td&gt;
+&lt;td&gt;保存一个变量及其附加的资源, 并使其在编辑器中可见和可修改&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;&lt;td&gt;setget&lt;/td&gt;
+&lt;td&gt;为变量定义setter和getter函数&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;&lt;td&gt;preload&lt;/td&gt;
+&lt;td&gt;预加载一个类或变量&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;&lt;td&gt;INF&lt;/td&gt;
+&lt;td&gt;无穷大常数. 用于比较&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;&lt;td&gt;NAN&lt;/td&gt;
+&lt;td&gt;NAN(不是一个数字)常数. 用于比较&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;p&gt;字面量(只列出部分):&lt;/p&gt;
+&lt;table border="1" class="docutils"&gt;
+&lt;colgroup&gt;
+&lt;col width="29%" /&gt;
+&lt;col width="71%" /&gt;
+&lt;/colgroup&gt;
+&lt;thead valign="bottom"&gt;
+&lt;tr&gt;&lt;th class="head"&gt;字面量&lt;/th&gt;
+&lt;th class="head"&gt;类型&lt;/th&gt;
+&lt;/tr&gt;
+&lt;/thead&gt;
+&lt;tbody valign="top"&gt;
+&lt;tr&gt;&lt;td&gt;&lt;cite&gt;&amp;#64;&amp;quot;Node/Label&amp;quot;&lt;/cite&gt;&lt;/td&gt;
+&lt;td&gt;&lt;cite&gt;NodePath&lt;/cite&gt; 或 StringName&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;&lt;td&gt;&lt;cite&gt;$NodePath&lt;/cite&gt;&lt;/td&gt;
+&lt;td&gt;&lt;cite&gt;get_node(&amp;quot;NodePath&amp;quot;)&lt;/cite&gt; 的简写&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;/div&gt;
+&lt;div class="section" id="api"&gt;
+&lt;h2&gt;API&lt;/h2&gt;
+&lt;p&gt;API相关&lt;/p&gt;
+&lt;div class="section" id="section-1"&gt;
+&lt;h3&gt;性能监控&lt;/h3&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="c1"&gt;# 比如FPS&lt;/span&gt;
+&lt;span class="n"&gt;Performance&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;get_monitor&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;Performance&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;TIME_FPS&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class="section" id="udp"&gt;
+&lt;h3&gt;UDP网络监控&lt;/h3&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="c1"&gt;# 比如RTT&lt;/span&gt;
+&lt;span class="c1"&gt;# 先初始话Enet&lt;/span&gt;
+&lt;span class="n"&gt;enet&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;ENetMultiplayerPeer&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;new&lt;/span&gt;&lt;span class="p"&gt;()&lt;/span&gt;
+&lt;span class="c1"&gt;# 再根据id获取ENetPacketPeer&lt;/span&gt;
+&lt;span class="n"&gt;peer&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;enet&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;get_peer&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="nb"&gt;id&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
+&lt;span class="n"&gt;peer&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;get_statistic&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;ENetPacketPeer&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;PEER_ROUND_TRIP_TIME&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+</content><category term="game-dev"></category><category term="godot"></category></entry><entry><title>Linux常用命令</title><link href="https://lyncir.github.io/linux-command.html" rel="alternate"></link><published>2022-07-09T15:42:00+08:00</published><updated>2022-07-09T15:42:00+08:00</updated><author><name>lyncir</name></author><id>tag:lyncir.github.io,2022-07-09:/linux-command.html</id><summary type="html">&lt;ul class="simple"&gt;
+&lt;li&gt;查看链路上的最大MTU大小&lt;/li&gt;
+&lt;/ul&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;$&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="nv"&gt;size&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="m"&gt;1272&lt;/span&gt;
+&lt;span class="k"&gt;while&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;ping&lt;span class="w"&gt; &lt;/span&gt;-s&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="nv"&gt;$size&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;-c1&lt;span class="w"&gt; &lt;/span&gt;-M&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="k"&gt;do&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;google.com&lt;span class="w"&gt; &lt;/span&gt;&amp;gt;&lt;span class="p"&gt;&amp;amp;&lt;/span&gt;/dev/null&lt;span class="p"&gt;;&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="k"&gt;do&lt;/span&gt;
+&lt;span class="w"&gt;  &lt;/span&gt;&lt;span class="o"&gt;((&lt;/span&gt;&lt;span class="nv"&gt;size&lt;/span&gt;&lt;span class="o"&gt;+=&lt;/span&gt;&lt;span class="m"&gt;4&lt;/span&gt;&lt;span class="o"&gt;))&lt;/span&gt;
+&lt;span class="k"&gt;done&lt;/span&gt;
+&lt;span class="nb"&gt;echo&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="s2"&gt;&amp;quot;Max MTU size: &lt;/span&gt;&lt;span class="k"&gt;$((&lt;/span&gt;&lt;span class="nv"&gt;size&lt;/span&gt;&lt;span class="o"&gt;-&lt;/span&gt;&lt;span class="m"&gt;4&lt;/span&gt;&lt;span class="o"&gt;+&lt;/span&gt;&lt;span class="m"&gt;28&lt;/span&gt;&lt;span class="k"&gt;))&lt;/span&gt;&lt;span class="s2"&gt;&amp;quot;&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+&lt;ul class="simple"&gt;
+&lt;li&gt;模拟常见网络问题&lt;/li&gt;
+&lt;/ul&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="c1"&gt;# 使用 `iptables` 丢弃传入 …&lt;/span&gt;&lt;/pre&gt;&lt;/div&gt;</summary><content type="html">&lt;ul class="simple"&gt;
+&lt;li&gt;查看链路上的最大MTU大小&lt;/li&gt;
+&lt;/ul&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;$&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="nv"&gt;size&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="m"&gt;1272&lt;/span&gt;
+&lt;span class="k"&gt;while&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;ping&lt;span class="w"&gt; &lt;/span&gt;-s&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="nv"&gt;$size&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;-c1&lt;span class="w"&gt; &lt;/span&gt;-M&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="k"&gt;do&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;google.com&lt;span class="w"&gt; &lt;/span&gt;&amp;gt;&lt;span class="p"&gt;&amp;amp;&lt;/span&gt;/dev/null&lt;span class="p"&gt;;&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="k"&gt;do&lt;/span&gt;
+&lt;span class="w"&gt;  &lt;/span&gt;&lt;span class="o"&gt;((&lt;/span&gt;&lt;span class="nv"&gt;size&lt;/span&gt;&lt;span class="o"&gt;+=&lt;/span&gt;&lt;span class="m"&gt;4&lt;/span&gt;&lt;span class="o"&gt;))&lt;/span&gt;
+&lt;span class="k"&gt;done&lt;/span&gt;
+&lt;span class="nb"&gt;echo&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="s2"&gt;&amp;quot;Max MTU size: &lt;/span&gt;&lt;span class="k"&gt;$((&lt;/span&gt;&lt;span class="nv"&gt;size&lt;/span&gt;&lt;span class="o"&gt;-&lt;/span&gt;&lt;span class="m"&gt;4&lt;/span&gt;&lt;span class="o"&gt;+&lt;/span&gt;&lt;span class="m"&gt;28&lt;/span&gt;&lt;span class="k"&gt;))&lt;/span&gt;&lt;span class="s2"&gt;&amp;quot;&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+&lt;ul class="simple"&gt;
+&lt;li&gt;模拟常见网络问题&lt;/li&gt;
+&lt;/ul&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="c1"&gt;# 使用 `iptables` 丢弃传入和传出的数据包&lt;/span&gt;
+$&lt;span class="w"&gt; &lt;/span&gt;iptables&lt;span class="w"&gt; &lt;/span&gt;-A&lt;span class="w"&gt; &lt;/span&gt;INPUT&lt;span class="w"&gt; &lt;/span&gt;-m&lt;span class="w"&gt; &lt;/span&gt;statistic&lt;span class="w"&gt; &lt;/span&gt;--mode&lt;span class="w"&gt; &lt;/span&gt;random&lt;span class="w"&gt; &lt;/span&gt;--probability&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="m"&gt;0&lt;/span&gt;.1&lt;span class="w"&gt; &lt;/span&gt;-j&lt;span class="w"&gt; &lt;/span&gt;DROP
+$&lt;span class="w"&gt; &lt;/span&gt;iptables&lt;span class="w"&gt; &lt;/span&gt;-A&lt;span class="w"&gt; &lt;/span&gt;OUTPUT&lt;span class="w"&gt; &lt;/span&gt;-m&lt;span class="w"&gt; &lt;/span&gt;statistic&lt;span class="w"&gt; &lt;/span&gt;--mode&lt;span class="w"&gt; &lt;/span&gt;random&lt;span class="w"&gt; &lt;/span&gt;--probability&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="m"&gt;0&lt;/span&gt;.1&lt;span class="w"&gt; &lt;/span&gt;-j&lt;span class="w"&gt; &lt;/span&gt;DROP
+
+&lt;span class="c1"&gt;# 使用 `tc` 支持一些附加选项&lt;/span&gt;
+$&lt;span class="w"&gt; &lt;/span&gt;tc&lt;span class="w"&gt; &lt;/span&gt;qdisc&lt;span class="w"&gt; &lt;/span&gt;add&lt;span class="w"&gt; &lt;/span&gt;dev&lt;span class="w"&gt; &lt;/span&gt;eth0&lt;span class="w"&gt; &lt;/span&gt;root&lt;span class="w"&gt; &lt;/span&gt;netem&lt;span class="w"&gt; &lt;/span&gt;delay&lt;span class="w"&gt; &lt;/span&gt;50ms&lt;span class="w"&gt; &lt;/span&gt;20ms&lt;span class="w"&gt; &lt;/span&gt;distribution&lt;span class="w"&gt; &lt;/span&gt;normal
+$&lt;span class="w"&gt; &lt;/span&gt;tc&lt;span class="w"&gt; &lt;/span&gt;qdisc&lt;span class="w"&gt; &lt;/span&gt;change&lt;span class="w"&gt; &lt;/span&gt;dev&lt;span class="w"&gt; &lt;/span&gt;eth0&lt;span class="w"&gt; &lt;/span&gt;root&lt;span class="w"&gt; &lt;/span&gt;netem&lt;span class="w"&gt; &lt;/span&gt;reorder&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="m"&gt;0&lt;/span&gt;.02&lt;span class="w"&gt; &lt;/span&gt;duplicate&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="m"&gt;0&lt;/span&gt;.05&lt;span class="w"&gt; &lt;/span&gt;corrupt&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="m"&gt;0&lt;/span&gt;.01
+
+&lt;span class="c1"&gt;# 重置&lt;/span&gt;
+$&lt;span class="w"&gt; &lt;/span&gt;tc&lt;span class="w"&gt; &lt;/span&gt;qdisc&lt;span class="w"&gt; &lt;/span&gt;del&lt;span class="w"&gt; &lt;/span&gt;dev&lt;span class="w"&gt; &lt;/span&gt;eth0&lt;span class="w"&gt; &lt;/span&gt;root&lt;span class="w"&gt; &lt;/span&gt;netem
+&lt;/pre&gt;&lt;/div&gt;
+</content><category term="linux"></category><category term="command"></category></entry><entry><title>Python学习资源</title><link href="https://lyncir.github.io/python-study-resource.html" rel="alternate"></link><published>2022-06-27T16:06:00+08:00</published><updated>2022-06-27T16:06:00+08:00</updated><author><name>lyncir</name></author><id>tag:lyncir.github.io,2022-06-27:/python-study-resource.html</id><summary type="html">&lt;div class="section" id="section-1"&gt;
+&lt;h2&gt;基础&lt;/h2&gt;
+&lt;ul class="simple"&gt;
+&lt;li&gt;&lt;a class="reference external" href="http://www.linuxtopia.org/online_books/programming_books/python_programming/index.html"&gt;Building Skills in Python&lt;/a&gt;&lt;ul&gt;
+&lt;li&gt;个人认为不错的入门教程&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/div&gt;
+&lt;div class="section" id="section-2"&gt;
+&lt;h2&gt;进阶&lt;/h2&gt;
+&lt;ul class="simple"&gt;
+&lt;li&gt;&lt;a class="reference external" href="https://www.oreilly.com/library/view/fluent-python/9781491946237/"&gt;Fluent Python&lt;/a&gt;&lt;ul&gt;
+&lt;li&gt;流畅的python&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;a class="reference external" href="https://www.oreilly.com/library/view/python-parallel-programming/9781785289583/"&gt;Python Parallel Programming Cookbook&lt;/a&gt;&lt;ul&gt;
+&lt;li&gt;Python并行编程&lt;/li&gt;
+&lt;li&gt;&lt;a class="reference external" href="http://python-parallel-programmning-cookbook.readthedocs.io/"&gt;中文&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;a class="reference external" href="https://runestone.academy/ns/books/published/pythonds/index.html"&gt;Problem Solving with Algorithms and Data Structures using Python&lt;/a&gt;&lt;ul&gt;
+&lt;li&gt;Python数据结构 …&lt;/li&gt;&lt;/ul&gt;&lt;/li&gt;&lt;/ul&gt;&lt;/div&gt;</summary><content type="html">&lt;div class="section" id="section-1"&gt;
+&lt;h2&gt;基础&lt;/h2&gt;
+&lt;ul class="simple"&gt;
+&lt;li&gt;&lt;a class="reference external" href="http://www.linuxtopia.org/online_books/programming_books/python_programming/index.html"&gt;Building Skills in Python&lt;/a&gt;&lt;ul&gt;
+&lt;li&gt;个人认为不错的入门教程&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/div&gt;
+&lt;div class="section" id="section-2"&gt;
+&lt;h2&gt;进阶&lt;/h2&gt;
+&lt;ul class="simple"&gt;
+&lt;li&gt;&lt;a class="reference external" href="https://www.oreilly.com/library/view/fluent-python/9781491946237/"&gt;Fluent Python&lt;/a&gt;&lt;ul&gt;
+&lt;li&gt;流畅的python&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;a class="reference external" href="https://www.oreilly.com/library/view/python-parallel-programming/9781785289583/"&gt;Python Parallel Programming Cookbook&lt;/a&gt;&lt;ul&gt;
+&lt;li&gt;Python并行编程&lt;/li&gt;
+&lt;li&gt;&lt;a class="reference external" href="http://python-parallel-programmning-cookbook.readthedocs.io/"&gt;中文&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;a class="reference external" href="https://runestone.academy/ns/books/published/pythonds/index.html"&gt;Problem Solving with Algorithms and Data Structures using Python&lt;/a&gt;&lt;ul&gt;
+&lt;li&gt;Python数据结构&lt;/li&gt;
+&lt;li&gt;&lt;a class="reference external" href="https://gundy.gitbook.io/python-data-structure-cn/"&gt;中文&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;a class="reference external" href="https://book.pythontips.com/en/latest/index.html"&gt;Python Tips&lt;/a&gt;&lt;ul&gt;
+&lt;li&gt;Python技巧&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;a class="reference external" href="https://pymotw.com/3/index.html"&gt;Python 3 Module of the Week&lt;/a&gt;&lt;ul&gt;
+&lt;li&gt;Python3标准库实例教程&lt;/li&gt;
+&lt;li&gt;&lt;a class="reference external" href="https://learnku.com/docs/pymotw"&gt;中文&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/div&gt;
+</content><category term="python"></category><category term="resource"></category></entry><entry><title>数据库schema优化工具</title><link href="https://lyncir.github.io/index-digest.html" rel="alternate"></link><published>2022-04-15T11:42:00+08:00</published><updated>2022-04-15T11:42:00+08:00</updated><author><name>lyncir</name></author><id>tag:lyncir.github.io,2022-04-15:/index-digest.html</id><summary type="html">&lt;p&gt;&lt;a class="reference external" href="https://github.com/macbre/index-digest"&gt;index-digest&lt;/a&gt;: 分析数据库查询和schema并提供索引改进建议&lt;/p&gt;
+&lt;div class="section" id="section-1"&gt;
+&lt;h2&gt;安装&lt;/h2&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;$&lt;span class="w"&gt; &lt;/span&gt;pip&lt;span class="w"&gt; &lt;/span&gt;install&lt;span class="w"&gt; &lt;/span&gt;indexdigest
+&lt;/pre&gt;&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class="section" id="section-2"&gt;
+&lt;h2&gt;数据库查询日志&lt;/h2&gt;
+&lt;p&gt;示例:&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="c1"&gt;-- A comment&lt;/span&gt;
+&lt;span class="k"&gt;select&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="o"&gt;*&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="k"&gt;from&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;0002_not_used_indices&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="k"&gt;order&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="k"&gt;by&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;id&lt;/span&gt;
+&lt;span class="k"&gt;select&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="o"&gt;*&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="k"&gt;from&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;0002_not_used_indices …&lt;/span&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;</summary><content type="html">&lt;p&gt;&lt;a class="reference external" href="https://github.com/macbre/index-digest"&gt;index-digest&lt;/a&gt;: 分析数据库查询和schema并提供索引改进建议&lt;/p&gt;
+&lt;div class="section" id="section-1"&gt;
+&lt;h2&gt;安装&lt;/h2&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;$&lt;span class="w"&gt; &lt;/span&gt;pip&lt;span class="w"&gt; &lt;/span&gt;install&lt;span class="w"&gt; &lt;/span&gt;indexdigest
+&lt;/pre&gt;&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class="section" id="section-2"&gt;
+&lt;h2&gt;数据库查询日志&lt;/h2&gt;
+&lt;p&gt;示例:&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="c1"&gt;-- A comment&lt;/span&gt;
+&lt;span class="k"&gt;select&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="o"&gt;*&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="k"&gt;from&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;0002_not_used_indices&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="k"&gt;order&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="k"&gt;by&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;id&lt;/span&gt;
+&lt;span class="k"&gt;select&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="o"&gt;*&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="k"&gt;from&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;0002_not_used_indices&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="k"&gt;where&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;foo&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="s1"&gt;&amp;#39;foo&amp;#39;&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="k"&gt;and&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;id&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="mi"&gt;2&lt;/span&gt;
+&lt;span class="k"&gt;select&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="nf"&gt;count&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="o"&gt;*&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="k"&gt;from&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;0002_not_used_indices&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="k"&gt;where&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;foo&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="s1"&gt;&amp;#39;foo&amp;#39;&lt;/span&gt;
+&lt;span class="cm"&gt;/* foo bar */&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="k"&gt;select&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="o"&gt;*&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="k"&gt;from&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;0002_not_used_indices&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="k"&gt;where&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;bar&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="s1"&gt;&amp;#39;foo&amp;#39;&lt;/span&gt;
+&lt;span class="k"&gt;INSERT&lt;/span&gt;&lt;span class="w"&gt;  &lt;/span&gt;&lt;span class="k"&gt;IGNORE&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="k"&gt;INTO&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n n-Quoted"&gt;`0070_insert_ignore`&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="k"&gt;VALUES&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s1"&gt;&amp;#39;123&amp;#39;&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="mi"&gt;9&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="s1"&gt;&amp;#39;2017-01-01&amp;#39;&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;也可以使用MySQL慢查询日志,但需要进行前置处理&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="n"&gt;cat&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;mysql&lt;/span&gt;&lt;span class="o"&gt;-&lt;/span&gt;&lt;span class="k"&gt;slow&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;log&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="o"&gt;|&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;egrep&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="o"&gt;-&lt;/span&gt;&lt;span class="n"&gt;v&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="s1"&gt;&amp;#39;^(SET timestamp|#|throttle: )&amp;#39;&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="o"&gt;&amp;gt;&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;queries&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;log&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;最后执行 &lt;cite&gt;index_digest --sql-log=queries.log&lt;/cite&gt;&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class="section" id="section-3"&gt;
+&lt;h2&gt;常用选项&lt;/h2&gt;
+&lt;ul class="simple"&gt;
+&lt;li&gt;&lt;cite&gt;missing_primary_index&lt;/cite&gt;: 报告没有主键或唯一索引的表 &lt;a class="reference external" href="https://bugs.mysql.com/bug.php?id=76252"&gt;MySQL bug #76252&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;cite&gt;low_cardinality_index&lt;/cite&gt;: 报告使用基数较低的索引&lt;/li&gt;
+&lt;li&gt;&lt;cite&gt;queries_not_using_index&lt;/cite&gt;: 报告没有使用任何索引&lt;/li&gt;
+&lt;li&gt;&lt;cite&gt;queries_using_filesort&lt;/cite&gt;: 报告需要`filesort`的查询. &lt;a class="reference external" href="https://www.percona.com/blog/2009/03/05/what-does-using-filesort-mean-in-mysql/"&gt;a sort can’t be performed from an index and quicksort is used&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;cite&gt;queries_using_temporary&lt;/cite&gt;: 报告需要临时表的查询&lt;/li&gt;
+&lt;li&gt;&lt;cite&gt;queries_using_full_table_scan&lt;/cite&gt;: 报告使用全表查询. &lt;a class="reference external" href="https://dev.mysql.com/doc/refman/5.7/en/table-scan-avoidance.html"&gt;full table scan&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;cite&gt;selects_with_like&lt;/cite&gt;: 报告使用`LIKE %foo`查询&lt;/li&gt;
+&lt;li&gt;&lt;cite&gt;having_clause&lt;/cite&gt;: 报告 &lt;a class="reference external" href="https://github.com/jarulraj/sqlcheck/blob/master/docs/query/3012.md"&gt;queries using HAVING clause&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;cite&gt;high_offset_selects&lt;/cite&gt;: 报告 &lt;a class="reference external" href="https://www.percona.com/blog/2008/09/24/four-ways-to-optimize-paginated-displays/"&gt;SELECT queries using high OFFSET&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;$&lt;span class="w"&gt; &lt;/span&gt;index_digest&lt;span class="w"&gt; &lt;/span&gt;mysql://127.0.0.1/database&lt;span class="w"&gt; &lt;/span&gt;--sql-log&lt;span class="o"&gt;=&lt;/span&gt;queries.log&lt;span class="w"&gt; &lt;/span&gt;--checks&lt;span class="o"&gt;=&lt;/span&gt;missing_primary_index,low_cardinality_index,queries_not_using_index,queries_using_filesort,queries_using_temporary,queries_using_full_table_scan,selects_with_like,having_clause,high_offset_selects
+&lt;/pre&gt;&lt;/div&gt;
+&lt;/div&gt;
+</content><category term="python"></category><category term="database"></category><category term="index"></category></entry><entry><title>python枚举</title><link href="https://lyncir.github.io/python-enum.html" rel="alternate"></link><published>2022-04-02T14:01:24+08:00</published><updated>2022-04-02T14:01:24+08:00</updated><author><name>lyncir</name></author><id>tag:lyncir.github.io,2022-04-02:/python-enum.html</id><summary type="html">&lt;p&gt;python在3.4版本新加了对枚举的支持,那在此之前都是怎么来做枚举的呢?&lt;/p&gt;
+&lt;ol class="arabic simple"&gt;
+&lt;li&gt;直接使用定义变量的方法&lt;/li&gt;
+&lt;/ol&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="n"&gt;RED&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="mi"&gt;1&lt;/span&gt;
+&lt;span class="n"&gt;GREEN&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="mi"&gt;2&lt;/span&gt;
+&lt;span class="n"&gt;BLUE&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="mi"&gt;3&lt;/span&gt;
+
+&lt;span class="k"&gt;assert&lt;/span&gt; &lt;span class="n"&gt;RED&lt;/span&gt; &lt;span class="o"&gt;==&lt;/span&gt; &lt;span class="mi"&gt;1 …&lt;/span&gt;&lt;/pre&gt;&lt;/div&gt;</summary><content type="html">&lt;p&gt;python在3.4版本新加了对枚举的支持,那在此之前都是怎么来做枚举的呢?&lt;/p&gt;
+&lt;ol class="arabic simple"&gt;
+&lt;li&gt;直接使用定义变量的方法&lt;/li&gt;
+&lt;/ol&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="n"&gt;RED&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="mi"&gt;1&lt;/span&gt;
+&lt;span class="n"&gt;GREEN&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="mi"&gt;2&lt;/span&gt;
+&lt;span class="n"&gt;BLUE&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="mi"&gt;3&lt;/span&gt;
+
+&lt;span class="k"&gt;assert&lt;/span&gt; &lt;span class="n"&gt;RED&lt;/span&gt; &lt;span class="o"&gt;==&lt;/span&gt; &lt;span class="mi"&gt;1&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+&lt;ol class="arabic simple" start="2"&gt;
+&lt;li&gt;使用字典&lt;/li&gt;
+&lt;/ol&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="n"&gt;color&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt;&lt;span class="s2"&gt;&amp;quot;RED&amp;quot;&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt; &lt;span class="mi"&gt;1&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="s2"&gt;&amp;quot;GREEN&amp;quot;&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt; &lt;span class="mi"&gt;2&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="s2"&gt;&amp;quot;BLUE&amp;quot;&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt; &lt;span class="mi"&gt;3&lt;/span&gt;&lt;span class="p"&gt;}&lt;/span&gt;
+
+&lt;span class="k"&gt;assert&lt;/span&gt; &lt;span class="n"&gt;color&lt;/span&gt;&lt;span class="p"&gt;[&lt;/span&gt;&lt;span class="s2"&gt;&amp;quot;RED&amp;quot;&lt;/span&gt;&lt;span class="p"&gt;]&lt;/span&gt; &lt;span class="o"&gt;==&lt;/span&gt; &lt;span class="mi"&gt;1&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+&lt;ol class="arabic simple" start="3"&gt;
+&lt;li&gt;使用类变量&lt;/li&gt;
+&lt;/ol&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="k"&gt;class&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="nc"&gt;Color&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;
+
+   &lt;span class="n"&gt;RED&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="mi"&gt;1&lt;/span&gt;
+   &lt;span class="n"&gt;GREEN&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="mi"&gt;2&lt;/span&gt;
+   &lt;span class="n"&gt;BLUE&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="mi"&gt;3&lt;/span&gt;
+
+&lt;span class="k"&gt;assert&lt;/span&gt; &lt;span class="n"&gt;Color&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;RED&lt;/span&gt; &lt;span class="o"&gt;==&lt;/span&gt; &lt;span class="mi"&gt;1&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;缺点:&lt;/p&gt;
+&lt;ol class="arabic simple"&gt;
+&lt;li&gt;会出现同key不同值情况&lt;/li&gt;
+&lt;li&gt;值可以被修改&lt;/li&gt;
+&lt;li&gt;不能反向查询,例如: 1对应的就是RED&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;使用枚举示例:&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="kn"&gt;from&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="nn"&gt;enum&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="kn"&gt;import&lt;/span&gt; &lt;span class="n"&gt;IntEnum&lt;/span&gt;
+
+&lt;span class="k"&gt;class&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="nc"&gt;Color&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;IntEnum&lt;/span&gt;&lt;span class="p"&gt;):&lt;/span&gt;
+
+   &lt;span class="n"&gt;RED&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="mi"&gt;1&lt;/span&gt;
+   &lt;span class="n"&gt;GREEN&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="mi"&gt;2&lt;/span&gt;
+   &lt;span class="n"&gt;BLUE&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="mi"&gt;3&lt;/span&gt;
+
+&lt;span class="k"&gt;assert&lt;/span&gt; &lt;span class="n"&gt;Color&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="mi"&gt;1&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;name&lt;/span&gt; &lt;span class="o"&gt;==&lt;/span&gt; &lt;span class="s2"&gt;&amp;quot;RED&amp;quot;&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+</content><category term="python"></category><category term="python"></category><category term="enum"></category></entry><entry><title>网络游戏时间同步问题</title><link href="https://lyncir.github.io/time-sync-algorithm.html" rel="alternate"></link><published>2022-03-16T17:31:00+08:00</published><updated>2022-03-16T17:31:00+08:00</updated><author><name>lyncir</name></author><id>tag:lyncir.github.io,2022-03-16:/time-sync-algorithm.html</id><summary type="html">&lt;div class="section" id="udp"&gt;
+&lt;h2&gt;UDP&lt;/h2&gt;
+&lt;p&gt;UDP协议的数据包误差小,因此它的同步方案比较简单:&lt;/p&gt;
+&lt;ol class="arabic simple"&gt;
+&lt;li&gt;client发送一个数据包给server,里面记录发送时间c1&lt;/li&gt;
+&lt;li&gt;server收到后,立刻给这 …&lt;/li&gt;&lt;/ol&gt;&lt;/div&gt;</summary><content type="html">&lt;div class="section" id="udp"&gt;
+&lt;h2&gt;UDP&lt;/h2&gt;
+&lt;p&gt;UDP协议的数据包误差小,因此它的同步方案比较简单:&lt;/p&gt;
+&lt;ol class="arabic simple"&gt;
+&lt;li&gt;client发送一个数据包给server,里面记录发送时间c1&lt;/li&gt;
+&lt;li&gt;server收到后,立刻给这个数据包添加一个server当前的时刻信息s1,并还给client&lt;/li&gt;
+&lt;li&gt;client收到server返还的数据包后,记录当前时间c2&lt;/li&gt;
+&lt;li&gt;整个行程的时间为 rt = c2 - c1&lt;/li&gt;
+&lt;li&gt;假设数据包的来回时间相同,那么client的server时间为 s3 = s1 + (rt/2)&lt;/li&gt;
+&lt;/ol&gt;
+&lt;/div&gt;
+&lt;div class="section" id="tcp"&gt;
+&lt;h2&gt;TCP&lt;/h2&gt;
+&lt;p&gt;TCP协议的数据包,会因为丢包重发而引起较大误差,因此同步方式会比UDP复杂&lt;/p&gt;
+&lt;ol class="arabic simple"&gt;
+&lt;li&gt;同UDP协议方式获取rt&lt;/li&gt;
+&lt;li&gt;client重复获取rt五次或更多次,每次暂停几秒&lt;/li&gt;
+&lt;li&gt;结果按最低rt到最高rt的顺序累积和排序.通过从这个有序列表中选择中点样本来确定中值rt&lt;/li&gt;
+&lt;li&gt;丢弃与中位数相差约1个标准差的所有样本,并使用算术平均值对剩余样本求平均值&lt;/li&gt;
+&lt;/ol&gt;
+&lt;/div&gt;
+</content><category term="game-dev"></category><category term="time-sync"></category></entry><entry><title>python性能分析工具</title><link href="https://lyncir.github.io/profiler.html" rel="alternate"></link><published>2022-03-08T11:40:00+08:00</published><updated>2022-03-08T11:40:00+08:00</updated><author><name>lyncir</name></author><id>tag:lyncir.github.io,2022-03-08:/profiler.html</id><summary type="html">&lt;div class="section" id="py-spy"&gt;
+&lt;h2&gt;&lt;a class="reference external" href="https://github.com/benfred/py-spy"&gt;py-spy&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;比较好用的功能是使用 &lt;tt class="docutils literal"&gt;record&lt;/tt&gt; 命令生成火焰图&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;$&lt;span class="w"&gt; &lt;/span&gt;py-spy&lt;span class="w"&gt; &lt;/span&gt;record&lt;span class="w"&gt; &lt;/span&gt;-o&lt;span class="w"&gt; &lt;/span&gt;profile.svg&lt;span class="w"&gt; &lt;/span&gt;--&lt;span class="w"&gt; &lt;/span&gt;python&lt;span class="w"&gt; &lt;/span&gt;run.py
+&lt;/pre&gt;&lt;/div&gt;
+&lt;object data="images/violy-profile.svg" type="image/svg+xml"&gt;&lt;/object&gt;
+&lt;p&gt;或者生成 &lt;a class="reference external" href="https://www.speedscope.app/"&gt;speedscope&lt;/a&gt; 格式进行分析&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;$&lt;span class="w"&gt; &lt;/span&gt;py-spy&lt;span class="w"&gt; &lt;/span&gt;record&lt;span class="w"&gt; &lt;/span&gt;--format&lt;span class="w"&gt; &lt;/span&gt;speedscope&lt;span class="w"&gt; &lt;/span&gt;-o&lt;span class="w"&gt; &lt;/span&gt;profile.speedscope.json&lt;span class="w"&gt; &lt;/span&gt;--&lt;span class="w"&gt; &lt;/span&gt;python&lt;span class="w"&gt; &lt;/span&gt;run.py
+&lt;/pre&gt;&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class="section" id="cprofile"&gt;
+&lt;h2&gt;cProfile …&lt;/h2&gt;&lt;/div&gt;</summary><content type="html">&lt;div class="section" id="py-spy"&gt;
+&lt;h2&gt;&lt;a class="reference external" href="https://github.com/benfred/py-spy"&gt;py-spy&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;比较好用的功能是使用 &lt;tt class="docutils literal"&gt;record&lt;/tt&gt; 命令生成火焰图&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;$&lt;span class="w"&gt; &lt;/span&gt;py-spy&lt;span class="w"&gt; &lt;/span&gt;record&lt;span class="w"&gt; &lt;/span&gt;-o&lt;span class="w"&gt; &lt;/span&gt;profile.svg&lt;span class="w"&gt; &lt;/span&gt;--&lt;span class="w"&gt; &lt;/span&gt;python&lt;span class="w"&gt; &lt;/span&gt;run.py
+&lt;/pre&gt;&lt;/div&gt;
+&lt;object data="images/violy-profile.svg" type="image/svg+xml"&gt;&lt;/object&gt;
+&lt;p&gt;或者生成 &lt;a class="reference external" href="https://www.speedscope.app/"&gt;speedscope&lt;/a&gt; 格式进行分析&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;$&lt;span class="w"&gt; &lt;/span&gt;py-spy&lt;span class="w"&gt; &lt;/span&gt;record&lt;span class="w"&gt; &lt;/span&gt;--format&lt;span class="w"&gt; &lt;/span&gt;speedscope&lt;span class="w"&gt; &lt;/span&gt;-o&lt;span class="w"&gt; &lt;/span&gt;profile.speedscope.json&lt;span class="w"&gt; &lt;/span&gt;--&lt;span class="w"&gt; &lt;/span&gt;python&lt;span class="w"&gt; &lt;/span&gt;run.py
+&lt;/pre&gt;&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class="section" id="cprofile"&gt;
+&lt;h2&gt;cProfile&lt;/h2&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;$&lt;span class="w"&gt; &lt;/span&gt;cat&lt;span class="w"&gt; &lt;/span&gt;test.py
+import&lt;span class="w"&gt; &lt;/span&gt;cProfile
+&lt;span class="nv"&gt;pr&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;cProfile.Profile&lt;span class="o"&gt;()&lt;/span&gt;
+pr.enable&lt;span class="o"&gt;()&lt;/span&gt;
+
+code...
+
+pr.disable&lt;span class="o"&gt;()&lt;/span&gt;
+pr.dump_stats&lt;span class="o"&gt;(&lt;/span&gt;&lt;span class="s2"&gt;&amp;quot;pipeline.prof&amp;quot;&lt;/span&gt;&lt;span class="o"&gt;)&lt;/span&gt;
+
+$&lt;span class="w"&gt; &lt;/span&gt;flameprof&lt;span class="w"&gt; &lt;/span&gt;pipeline.prof&lt;span class="w"&gt; &lt;/span&gt;&amp;gt;&lt;span class="w"&gt; &lt;/span&gt;pipeline.svg
+or
+$&lt;span class="w"&gt; &lt;/span&gt;snakeviz&lt;span class="w"&gt; &lt;/span&gt;pipeline.prof
+&lt;/pre&gt;&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class="section" id="line-profiler"&gt;
+&lt;h2&gt;&lt;a class="reference external" href="https://github.com/pyutils/line_profiler"&gt;line_profiler&lt;/a&gt;&lt;/h2&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;$&lt;span class="w"&gt; &lt;/span&gt;cat&lt;span class="w"&gt; &lt;/span&gt;test.py
+from&lt;span class="w"&gt; &lt;/span&gt;line_profiler&lt;span class="w"&gt; &lt;/span&gt;import&lt;span class="w"&gt; &lt;/span&gt;LineProfiler
+&lt;span class="nv"&gt;lp&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;LineProfiler&lt;span class="o"&gt;()&lt;/span&gt;
+
+&lt;span class="nv"&gt;lp_wrapper&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;lp&lt;span class="o"&gt;(&lt;/span&gt;func&lt;span class="o"&gt;)&lt;/span&gt;
+lp_wrapper&lt;span class="o"&gt;(&lt;/span&gt;**kwargs&lt;span class="o"&gt;)&lt;/span&gt;
+print&lt;span class="o"&gt;(&lt;/span&gt;lp.print_stats&lt;span class="o"&gt;())&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+&lt;/div&gt;
+</content><category term="python"></category><category term="profiler"></category></entry><entry><title>常见网络代理</title><link href="https://lyncir.github.io/network-proxy.html" rel="alternate"></link><published>2022-03-02T11:22:00+08:00</published><updated>2022-03-02T11:22:00+08:00</updated><author><name>lyncir</name></author><id>tag:lyncir.github.io,2022-03-02:/network-proxy.html</id><summary type="html">&lt;div class="section" id="git"&gt;
+&lt;h2&gt;git&lt;/h2&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;$&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="nb"&gt;echo&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="s2"&gt;&amp;quot;设置http代理&amp;quot;&lt;/span&gt;
+$&lt;span class="w"&gt; &lt;/span&gt;git&lt;span class="w"&gt; &lt;/span&gt;config&lt;span class="w"&gt; &lt;/span&gt;--global&lt;span class="w"&gt; &lt;/span&gt;http.proxy&lt;span class="w"&gt; &lt;/span&gt;http://127.0.0.1:1080
+$&lt;span class="w"&gt; &lt;/span&gt;git&lt;span class="w"&gt; &lt;/span&gt;config&lt;span class="w"&gt; &lt;/span&gt;--global&lt;span class="w"&gt; &lt;/span&gt;https.proxy&lt;span class="w"&gt; &lt;/span&gt;https://127.0.0.1:1080
+
+$&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="nb"&gt;echo&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="s2"&gt;&amp;quot;设置socks5代理&amp;quot;&lt;/span&gt;
+$&lt;span class="w"&gt; &lt;/span&gt;git&lt;span class="w"&gt; &lt;/span&gt;config&lt;span class="w"&gt; &lt;/span&gt;--global&lt;span class="w"&gt; &lt;/span&gt;http.proxy&lt;span class="w"&gt; &lt;/span&gt;socks5://127.0.0.1:1080
+$&lt;span class="w"&gt; &lt;/span&gt;git&lt;span class="w"&gt; &lt;/span&gt;config&lt;span class="w"&gt; &lt;/span&gt;--global&lt;span class="w"&gt; &lt;/span&gt;https …&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;</summary><content type="html">&lt;div class="section" id="git"&gt;
+&lt;h2&gt;git&lt;/h2&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;$&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="nb"&gt;echo&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="s2"&gt;&amp;quot;设置http代理&amp;quot;&lt;/span&gt;
+$&lt;span class="w"&gt; &lt;/span&gt;git&lt;span class="w"&gt; &lt;/span&gt;config&lt;span class="w"&gt; &lt;/span&gt;--global&lt;span class="w"&gt; &lt;/span&gt;http.proxy&lt;span class="w"&gt; &lt;/span&gt;http://127.0.0.1:1080
+$&lt;span class="w"&gt; &lt;/span&gt;git&lt;span class="w"&gt; &lt;/span&gt;config&lt;span class="w"&gt; &lt;/span&gt;--global&lt;span class="w"&gt; &lt;/span&gt;https.proxy&lt;span class="w"&gt; &lt;/span&gt;https://127.0.0.1:1080
+
+$&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="nb"&gt;echo&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="s2"&gt;&amp;quot;设置socks5代理&amp;quot;&lt;/span&gt;
+$&lt;span class="w"&gt; &lt;/span&gt;git&lt;span class="w"&gt; &lt;/span&gt;config&lt;span class="w"&gt; &lt;/span&gt;--global&lt;span class="w"&gt; &lt;/span&gt;http.proxy&lt;span class="w"&gt; &lt;/span&gt;socks5://127.0.0.1:1080
+$&lt;span class="w"&gt; &lt;/span&gt;git&lt;span class="w"&gt; &lt;/span&gt;config&lt;span class="w"&gt; &lt;/span&gt;--global&lt;span class="w"&gt; &lt;/span&gt;https.proxy&lt;span class="w"&gt; &lt;/span&gt;socks5://127.0.0.1:1080
+
+$&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="nb"&gt;echo&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="s2"&gt;&amp;quot;取消代理&amp;quot;&lt;/span&gt;
+$&lt;span class="w"&gt; &lt;/span&gt;git&lt;span class="w"&gt; &lt;/span&gt;config&lt;span class="w"&gt; &lt;/span&gt;--global&lt;span class="w"&gt; &lt;/span&gt;--unset&lt;span class="w"&gt; &lt;/span&gt;http.proxy
+$&lt;span class="w"&gt; &lt;/span&gt;git&lt;span class="w"&gt; &lt;/span&gt;config&lt;span class="w"&gt; &lt;/span&gt;--global&lt;span class="w"&gt; &lt;/span&gt;--unset&lt;span class="w"&gt; &lt;/span&gt;https.proxy
+&lt;/pre&gt;&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class="section" id="wget"&gt;
+&lt;h2&gt;wget&lt;/h2&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;$&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="nb"&gt;echo&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="s2"&gt;&amp;quot;设置http代理&amp;quot;&lt;/span&gt;
+$&lt;span class="w"&gt; &lt;/span&gt;wget&lt;span class="w"&gt; &lt;/span&gt;-e&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="nv"&gt;use_proxy&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;yes&lt;span class="w"&gt; &lt;/span&gt;-e&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="nv"&gt;https_proxy&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="m"&gt;127&lt;/span&gt;.0.0.1:1080&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="o"&gt;[&lt;/span&gt;URL&lt;span class="o"&gt;]&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class="section" id="curl"&gt;
+&lt;h2&gt;curl&lt;/h2&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;$&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="nb"&gt;echo&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="s2"&gt;&amp;quot;设置http代理&amp;quot;&lt;/span&gt;
+$&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="nb"&gt;export&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="nv"&gt;http_proxy&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;http://127.0.0.1:1080
+$&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="nb"&gt;export&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="nv"&gt;https_proxy&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;https://127.0.0.1:1080
+&lt;/pre&gt;&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class="section" id="pip"&gt;
+&lt;h2&gt;pip&lt;/h2&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;$&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="nb"&gt;echo&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="s2"&gt;&amp;quot;设置http代理&amp;quot;&lt;/span&gt;
+$&lt;span class="w"&gt; &lt;/span&gt;pip&lt;span class="w"&gt; &lt;/span&gt;install&lt;span class="w"&gt; &lt;/span&gt;--proxy&lt;span class="w"&gt; &lt;/span&gt;http://127.0.0.1:1080&lt;span class="w"&gt; &lt;/span&gt;-r&lt;span class="w"&gt; &lt;/span&gt;requirements.txt
+&lt;/pre&gt;&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class="section" id="docker"&gt;
+&lt;h2&gt;docker&lt;/h2&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;$&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="nb"&gt;echo&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="s2"&gt;&amp;quot;设置http代理&amp;quot;&lt;/span&gt;
+$&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="nv"&gt;HTTP_PROXY&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;http://127.0.0.1:1080&lt;span class="w"&gt; &lt;/span&gt;docker&lt;span class="w"&gt; &lt;/span&gt;pull&lt;span class="w"&gt; &lt;/span&gt;busybox
+&lt;/pre&gt;&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class="section" id="apt"&gt;
+&lt;h2&gt;apt&lt;/h2&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;$&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="nb"&gt;echo&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="s2"&gt;&amp;quot;设置http代理&amp;quot;&lt;/span&gt;
+$&lt;span class="w"&gt; &lt;/span&gt;cat&lt;span class="w"&gt; &lt;/span&gt;/etc/apt/apt.conf.d/proxy.conf
+Acquire::http::Proxy&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="s2"&gt;&amp;quot;http://127.0.0.1:1080&amp;quot;&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+Acquire::https::Proxy&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="s2"&gt;&amp;quot;http://127.0.0.1:1080&amp;quot;&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class="section" id="tsocks"&gt;
+&lt;h2&gt;&lt;a class="reference external" href="https://github.com/zouguangxian/tsocks"&gt;tsocks&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;socks的代理库，可以把sock转为http&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;$&lt;span class="w"&gt; &lt;/span&gt;tsocks&lt;span class="w"&gt; &lt;/span&gt;git&lt;span class="w"&gt; &lt;/span&gt;pull
+$&lt;span class="w"&gt; &lt;/span&gt;tsocks&lt;span class="w"&gt; &lt;/span&gt;apt&lt;span class="w"&gt; &lt;/span&gt;update
+&lt;/pre&gt;&lt;/div&gt;
+&lt;/div&gt;
+</content><category term="linux"></category><category term="network"></category><category term="proxy"></category></entry><entry><title>使用Pelican写Blog</title><link href="https://lyncir.github.io/pelican.html" rel="alternate"></link><published>2022-02-28T10:20:00+08:00</published><updated>2022-02-28T10:20:00+08:00</updated><author><name>lyncir</name></author><id>tag:lyncir.github.io,2022-02-28:/pelican.html</id><summary type="html">&lt;div class="section" id="section-1"&gt;
+&lt;h2&gt;写一篇新文章&lt;/h2&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;$&lt;span class="w"&gt; &lt;/span&gt;cat&lt;span class="w"&gt; &lt;/span&gt;content/文件名.rst
+
+标题
+&lt;span class="c1"&gt;####&lt;/span&gt;
+
+:date:&lt;span class="w"&gt; &lt;/span&gt;日期,格式&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="m"&gt;2010&lt;/span&gt;-10-03&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="m"&gt;10&lt;/span&gt;:20
+:modified:&lt;span class="w"&gt; &lt;/span&gt;修改时间
+:category:&lt;span class="w"&gt; &lt;/span&gt;分类,逗号分割
+:tags:&lt;span class="w"&gt; &lt;/span&gt;标签,逗号分割
+:slug:&lt;span class="w"&gt; &lt;/span&gt;url路径
+
+正文
+&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;使用 …&lt;/p&gt;&lt;/div&gt;</summary><content type="html">&lt;div class="section" id="section-1"&gt;
+&lt;h2&gt;写一篇新文章&lt;/h2&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;$&lt;span class="w"&gt; &lt;/span&gt;cat&lt;span class="w"&gt; &lt;/span&gt;content/文件名.rst
+
+标题
+&lt;span class="c1"&gt;####&lt;/span&gt;
+
+:date:&lt;span class="w"&gt; &lt;/span&gt;日期,格式&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="m"&gt;2010&lt;/span&gt;-10-03&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="m"&gt;10&lt;/span&gt;:20
+:modified:&lt;span class="w"&gt; &lt;/span&gt;修改时间
+:category:&lt;span class="w"&gt; &lt;/span&gt;分类,逗号分割
+:tags:&lt;span class="w"&gt; &lt;/span&gt;标签,逗号分割
+:slug:&lt;span class="w"&gt; &lt;/span&gt;url路径
+
+正文
+&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;使用 &lt;a class="reference external" href="https://docutils.sourceforge.io/docs/user/rst/quickref.html"&gt;reStructuredText&lt;/a&gt; 标记语言&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class="section" id="section-2"&gt;
+&lt;h2&gt;生成静态文件&lt;/h2&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;$&lt;span class="w"&gt; &lt;/span&gt;make&lt;span class="w"&gt; &lt;/span&gt;html
+$&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="nb"&gt;echo&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="s2"&gt;&amp;quot;本地查看&amp;quot;&lt;/span&gt;
+$&lt;span class="w"&gt; &lt;/span&gt;make&lt;span class="w"&gt; &lt;/span&gt;serve
+&lt;/pre&gt;&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class="section" id="github"&gt;
+&lt;h2&gt;上传到github&lt;/h2&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;$&lt;span class="w"&gt; &lt;/span&gt;pelican&lt;span class="w"&gt; &lt;/span&gt;content&lt;span class="w"&gt; &lt;/span&gt;-o&lt;span class="w"&gt; &lt;/span&gt;output&lt;span class="w"&gt; &lt;/span&gt;-s&lt;span class="w"&gt; &lt;/span&gt;pelicanconf.py
+$&lt;span class="w"&gt; &lt;/span&gt;ghp-import&lt;span class="w"&gt; &lt;/span&gt;output
+$&lt;span class="w"&gt; &lt;/span&gt;git&lt;span class="w"&gt; &lt;/span&gt;push&lt;span class="w"&gt; &lt;/span&gt;git@github.com:lyncir/lyncir.github.io.git&lt;span class="w"&gt; &lt;/span&gt;gh-pages:pages
+&lt;/pre&gt;&lt;/div&gt;
+&lt;/div&gt;
+</content><category term="python"></category><category term="pelican"></category></entry></feed>

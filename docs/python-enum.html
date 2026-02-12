@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+          <title>Lyncir's Blog - python枚举</title>
+        <meta charset="utf-8" />
+        <meta name="generator" content="Pelican" />
+        <link href="https://lyncir.github.io/feeds/all.atom.xml" type="application/atom+xml" rel="alternate" title="Lyncir's Blog Full Atom Feed" />
+
+        <link rel="stylesheet" href="https://lyncir.github.io/theme/css/rdark.css" />
+	<link rel="stylesheet" type="text/css" href="https://lyncir.github.io/theme/css/main.css" />
+        <link href="https://lyncir.github.io/" type="application/atom+xml" rel="alternate" title="Lyncir's Blog ATOM Feed" /><!--[if IE]><script src="http://html5shiv.googlecode.com/svn/trunk/html5.js"></script><![endif]-->
+	
+<!-- Using MathJax, with the delimiters $ -->
+<!-- Conflict with pygments for the .mo and .mi -->
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+  "HTML-CSS": {
+  styles: {
+  ".MathJax .mo, .MathJax .mi": {color: "black ! important"}}
+  },
+  tex2jax: {inlineMath: [['$','$'], ['\\\\(','\\\\)']],processEscapes: true}
+  });
+</script>
+
+<script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML"></script>
+</head>
+
+
+
+
+    <meta name="tags" content="python" />
+    <meta name="tags" content="enum" />
+
+</head>
+
+<body id="index" class="home">
+        <header id="banner" class="body">
+                <h1><a href="https://lyncir.github.io/">Lyncir's Blog</a></h1>
+        </header><!-- /#banner -->
+        <nav id="menu"><ul>
+            <li><a href="https://lyncir.github.io/category/db.html">db</a></li>
+            <li><a href="https://lyncir.github.io/category/game-dev.html">game-dev</a></li>
+            <li><a href="https://lyncir.github.io/category/git.html">git</a></li>
+            <li><a href="https://lyncir.github.io/category/linux.html">linux</a></li>
+            <li class="active"><a href="https://lyncir.github.io/category/python.html">python</a></li>
+        </ul></nav><!-- /#menu -->
+<section id="content" class="body">
+  <header>
+    <h2 class="entry-title">
+      <a href="https://lyncir.github.io/python-enum.html" rel="bookmark"
+         title="Permalink to python枚举">python枚举</a></h2>
+ 
+  </header>
+  <footer class="post-info">
+    <time class="published" datetime="2022-04-02T14:01:24+08:00">
+      2022-04-02 14:01:24
+    </time>
+    <address class="vcard author">
+      By           <a class="url fn" href="https://lyncir.github.io/author/lyncir.html">lyncir</a>
+    </address>
+    <div class="category">
+        Category: <a href="https://lyncir.github.io/category/python.html">python</a>
+    </div>
+    <div class="tags">
+        Tags:
+            <a href="https://lyncir.github.io/tag/python.html">python</a>
+            <a href="https://lyncir.github.io/tag/enum.html">enum</a>
+    </div>
+  </footer><!-- /.post-info -->
+  <div class="entry-content">
+    <p>python在3.4版本新加了对枚举的支持,那在此之前都是怎么来做枚举的呢?</p>
+<ol class="arabic simple">
+<li>直接使用定义变量的方法</li>
+</ol>
+<div class="highlight"><pre><span></span><span class="n">RED</span> <span class="o">=</span> <span class="mi">1</span>
+<span class="n">GREEN</span> <span class="o">=</span> <span class="mi">2</span>
+<span class="n">BLUE</span> <span class="o">=</span> <span class="mi">3</span>
+
+<span class="k">assert</span> <span class="n">RED</span> <span class="o">==</span> <span class="mi">1</span>
+</pre></div>
+<ol class="arabic simple" start="2">
+<li>使用字典</li>
+</ol>
+<div class="highlight"><pre><span></span><span class="n">color</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;RED&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s2">&quot;GREEN&quot;</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span> <span class="s2">&quot;BLUE&quot;</span><span class="p">:</span> <span class="mi">3</span><span class="p">}</span>
+
+<span class="k">assert</span> <span class="n">color</span><span class="p">[</span><span class="s2">&quot;RED&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="mi">1</span>
+</pre></div>
+<ol class="arabic simple" start="3">
+<li>使用类变量</li>
+</ol>
+<div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">Color</span><span class="p">:</span>
+
+   <span class="n">RED</span> <span class="o">=</span> <span class="mi">1</span>
+   <span class="n">GREEN</span> <span class="o">=</span> <span class="mi">2</span>
+   <span class="n">BLUE</span> <span class="o">=</span> <span class="mi">3</span>
+
+<span class="k">assert</span> <span class="n">Color</span><span class="o">.</span><span class="n">RED</span> <span class="o">==</span> <span class="mi">1</span>
+</pre></div>
+<p>缺点:</p>
+<ol class="arabic simple">
+<li>会出现同key不同值情况</li>
+<li>值可以被修改</li>
+<li>不能反向查询,例如: 1对应的就是RED</li>
+</ol>
+<p>使用枚举示例:</p>
+<div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">enum</span><span class="w"> </span><span class="kn">import</span> <span class="n">IntEnum</span>
+
+<span class="k">class</span><span class="w"> </span><span class="nc">Color</span><span class="p">(</span><span class="n">IntEnum</span><span class="p">):</span>
+
+   <span class="n">RED</span> <span class="o">=</span> <span class="mi">1</span>
+   <span class="n">GREEN</span> <span class="o">=</span> <span class="mi">2</span>
+   <span class="n">BLUE</span> <span class="o">=</span> <span class="mi">3</span>
+
+<span class="k">assert</span> <span class="n">Color</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="s2">&quot;RED&quot;</span>
+</pre></div>
+
+  </div><!-- /.entry-content -->
+</section>
+<script src="https://giscus.app/client.js"
+        data-repo="lyncir/lyncir.github.io"
+        data-repo-id="R_kgDOG6y0Rw"
+        data-category="Announcements"
+        data-category-id="DIC_kwDOG6y0R84COoru"
+        data-mapping="pathname"
+        data-reactions-enabled="1"
+        data-emit-metadata="0"
+        data-input-position="bottom"
+        data-theme="light"
+        data-lang="zh-CN"
+        data-loading="lazy"
+        crossorigin="anonymous"
+        async>
+</script>
+        <footer id="contentinfo" class="body">
+                <address id="about" class="vcard body">
+                Proudly powered by <a href="https://getpelican.com/">Pelican</a>,
+                which takes great advantage of <a href="https://www.python.org/">Python</a>.
+                </address><!-- /#about -->
+        </footer><!-- /#contentinfo -->
+</body>
+</html>

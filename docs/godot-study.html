@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+          <title>Lyncir's Blog - Godot 笔记</title>
+        <meta charset="utf-8" />
+        <meta name="generator" content="Pelican" />
+        <link href="https://lyncir.github.io/feeds/all.atom.xml" type="application/atom+xml" rel="alternate" title="Lyncir's Blog Full Atom Feed" />
+
+        <link rel="stylesheet" href="https://lyncir.github.io/theme/css/rdark.css" />
+	<link rel="stylesheet" type="text/css" href="https://lyncir.github.io/theme/css/main.css" />
+        <link href="https://lyncir.github.io/" type="application/atom+xml" rel="alternate" title="Lyncir's Blog ATOM Feed" /><!--[if IE]><script src="http://html5shiv.googlecode.com/svn/trunk/html5.js"></script><![endif]-->
+	
+<!-- Using MathJax, with the delimiters $ -->
+<!-- Conflict with pygments for the .mo and .mi -->
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+  "HTML-CSS": {
+  styles: {
+  ".MathJax .mo, .MathJax .mi": {color: "black ! important"}}
+  },
+  tex2jax: {inlineMath: [['$','$'], ['\\\\(','\\\\)']],processEscapes: true}
+  });
+</script>
+
+<script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML"></script>
+</head>
+
+
+
+
+    <meta name="tags" content="godot" />
+
+</head>
+
+<body id="index" class="home">
+        <header id="banner" class="body">
+                <h1><a href="https://lyncir.github.io/">Lyncir's Blog</a></h1>
+        </header><!-- /#banner -->
+        <nav id="menu"><ul>
+            <li><a href="https://lyncir.github.io/category/db.html">db</a></li>
+            <li class="active"><a href="https://lyncir.github.io/category/game-dev.html">game-dev</a></li>
+            <li><a href="https://lyncir.github.io/category/git.html">git</a></li>
+            <li><a href="https://lyncir.github.io/category/linux.html">linux</a></li>
+            <li><a href="https://lyncir.github.io/category/python.html">python</a></li>
+        </ul></nav><!-- /#menu -->
+<section id="content" class="body">
+  <header>
+    <h2 class="entry-title">
+      <a href="https://lyncir.github.io/godot-study.html" rel="bookmark"
+         title="Permalink to Godot 笔记">Godot 笔记</a></h2>
+ 
+  </header>
+  <footer class="post-info">
+    <time class="published" datetime="2022-07-19T17:09:00+08:00">
+      2022-07-19 17:09:00
+    </time>
+    <address class="vcard author">
+      By           <a class="url fn" href="https://lyncir.github.io/author/lyncir.html">lyncir</a>
+    </address>
+    <div class="category">
+        Category: <a href="https://lyncir.github.io/category/game-dev.html">game-dev</a>
+    </div>
+    <div class="tags">
+        Tags:
+            <a href="https://lyncir.github.io/tag/godot.html">godot</a>
+    </div>
+  </footer><!-- /.post-info -->
+  <div class="entry-content">
+    <p>代码基于Godot 4.0</p>
+<div class="section" id="gdscript">
+<h2>GdScript脚本</h2>
+<p>类似Python</p>
+<p>示例:</p>
+<div class="highlight"><pre><span></span><span class="c1"># 一个文件就是一个类</span>
+
+<span class="c1"># 继承</span>
+
+<span class="n">extends</span> <span class="n">BaseClass</span>
+
+<span class="c1"># (可选) 可自定义图标的类定义</span>
+
+<span class="n">class_name</span> <span class="n">MyClass</span><span class="p">,</span> <span class="s2">&quot;res://path/to/optional/icon.svg&quot;</span>
+
+
+<span class="c1"># 成员变量</span>
+
+<span class="n">var</span> <span class="n">a</span> <span class="o">=</span> <span class="mi">5</span>
+<span class="n">var</span> <span class="n">s</span> <span class="o">=</span> <span class="s2">&quot;Hello&quot;</span>
+<span class="n">var</span> <span class="n">arr</span> <span class="o">=</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">]</span>
+<span class="n">var</span> <span class="nb">dict</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;key&quot;</span><span class="p">:</span> <span class="s2">&quot;value&quot;</span><span class="p">,</span> <span class="mi">2</span><span class="p">:</span> <span class="mi">3</span><span class="p">}</span>
+<span class="n">var</span> <span class="n">typed_var</span><span class="p">:</span> <span class="nb">int</span>
+<span class="n">var</span> <span class="n">inferred_type</span> <span class="o">:=</span> <span class="s2">&quot;String&quot;</span>
+
+<span class="c1"># 常数</span>
+
+<span class="n">const</span> <span class="n">ANSWER</span> <span class="o">=</span> <span class="mi">42</span>
+<span class="n">const</span> <span class="n">THE_NAME</span> <span class="o">=</span> <span class="s2">&quot;Charly&quot;</span>
+
+<span class="c1"># 枚举</span>
+
+<span class="n">enum</span> <span class="p">{</span><span class="n">UNIT_NEUTRAL</span><span class="p">,</span> <span class="n">UNIT_ENEMY</span><span class="p">,</span> <span class="n">UNIT_ALLY</span><span class="p">}</span>
+<span class="n">enum</span> <span class="n">Named</span> <span class="p">{</span><span class="n">THING_1</span><span class="p">,</span> <span class="n">THING_2</span><span class="p">,</span> <span class="n">ANOTHER_THING</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span><span class="p">}</span>
+
+<span class="c1"># 内建向量类型</span>
+
+<span class="n">var</span> <span class="n">v2</span> <span class="o">=</span> <span class="n">Vector2</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+<span class="n">var</span> <span class="n">v3</span> <span class="o">=</span> <span class="n">Vector3</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
+
+
+<span class="c1"># 函数</span>
+
+<span class="n">func</span> <span class="n">some_function</span><span class="p">(</span><span class="n">param1</span><span class="p">,</span> <span class="n">param2</span><span class="p">):</span>
+    <span class="n">var</span> <span class="n">local_var</span> <span class="o">=</span> <span class="mi">5</span>
+
+    <span class="k">if</span> <span class="n">param1</span> <span class="o">&lt;</span> <span class="n">local_var</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="n">param1</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">param2</span> <span class="o">&gt;</span> <span class="mi">5</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="n">param2</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Fail!&quot;</span><span class="p">)</span>
+
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">20</span><span class="p">):</span>
+        <span class="nb">print</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
+
+    <span class="k">while</span> <span class="n">param2</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">param2</span> <span class="o">-=</span> <span class="mi">1</span>
+
+    <span class="n">var</span> <span class="n">local_var2</span> <span class="o">=</span> <span class="n">param1</span> <span class="o">+</span> <span class="mi">3</span>
+    <span class="k">return</span> <span class="n">local_var2</span>
+
+
+<span class="c1"># 重写父级函数,如果要调用父级函数,可以使用&#39;.&#39;, 就像python的super</span>
+
+<span class="n">func</span> <span class="n">something</span><span class="p">(</span><span class="n">p1</span><span class="p">,</span> <span class="n">p2</span><span class="p">):</span>
+    <span class="o">.</span><span class="n">something</span><span class="p">(</span><span class="n">p1</span><span class="p">,</span> <span class="n">p2</span><span class="p">)</span>
+
+
+<span class="c1"># 内类</span>
+
+<span class="k">class</span><span class="w"> </span><span class="nc">Something</span><span class="p">:</span>
+    <span class="n">var</span> <span class="n">a</span> <span class="o">=</span> <span class="mi">10</span>
+
+
+<span class="c1"># 构造函数</span>
+
+<span class="n">func</span> <span class="n">_init</span><span class="p">():</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Constructed!&quot;</span><span class="p">)</span>
+    <span class="n">var</span> <span class="n">lv</span> <span class="o">=</span> <span class="n">Something</span><span class="o">.</span><span class="n">new</span><span class="p">()</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">lv</span><span class="o">.</span><span class="n">a</span><span class="p">)</span>
+</pre></div>
+<p>关键字(只列出部分):</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="17%" />
+<col width="83%" />
+</colgroup>
+<thead valign="bottom">
+<tr><th class="head">关键字</th>
+<th class="head">描述</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr><td>match</td>
+<td>用于分支程序的执行</td>
+</tr>
+<tr><td>class_name</td>
+<td>为脚本定义类名称和可选图标</td>
+</tr>
+<tr><td>extends</td>
+<td>定义用当前类扩展什么类</td>
+</tr>
+<tr><td>as</td>
+<td>如果可能, 将值转换为给定类型</td>
+</tr>
+<tr><td>self</td>
+<td>引用当前类实例</td>
+</tr>
+<tr><td>tool</td>
+<td>在编辑器中执行脚本</td>
+</tr>
+<tr><td>signal</td>
+<td>定义信号</td>
+</tr>
+<tr><td>onready</td>
+<td>一旦脚本附加到的节点及其子级成为场景树的一部分, 就初始化变量</td>
+</tr>
+<tr><td>export</td>
+<td>保存一个变量及其附加的资源, 并使其在编辑器中可见和可修改</td>
+</tr>
+<tr><td>setget</td>
+<td>为变量定义setter和getter函数</td>
+</tr>
+<tr><td>preload</td>
+<td>预加载一个类或变量</td>
+</tr>
+<tr><td>INF</td>
+<td>无穷大常数. 用于比较</td>
+</tr>
+<tr><td>NAN</td>
+<td>NAN(不是一个数字)常数. 用于比较</td>
+</tr>
+</tbody>
+</table>
+<p>字面量(只列出部分):</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="29%" />
+<col width="71%" />
+</colgroup>
+<thead valign="bottom">
+<tr><th class="head">字面量</th>
+<th class="head">类型</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr><td><cite>&#64;&quot;Node/Label&quot;</cite></td>
+<td><cite>NodePath</cite> 或 StringName</td>
+</tr>
+<tr><td><cite>$NodePath</cite></td>
+<td><cite>get_node(&quot;NodePath&quot;)</cite> 的简写</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="api">
+<h2>API</h2>
+<p>API相关</p>
+<div class="section" id="section-1">
+<h3>性能监控</h3>
+<div class="highlight"><pre><span></span><span class="c1"># 比如FPS</span>
+<span class="n">Performance</span><span class="o">.</span><span class="n">get_monitor</span><span class="p">(</span><span class="n">Performance</span><span class="o">.</span><span class="n">TIME_FPS</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="section" id="udp">
+<h3>UDP网络监控</h3>
+<div class="highlight"><pre><span></span><span class="c1"># 比如RTT</span>
+<span class="c1"># 先初始话Enet</span>
+<span class="n">enet</span> <span class="o">=</span> <span class="n">ENetMultiplayerPeer</span><span class="o">.</span><span class="n">new</span><span class="p">()</span>
+<span class="c1"># 再根据id获取ENetPacketPeer</span>
+<span class="n">peer</span> <span class="o">=</span> <span class="n">enet</span><span class="o">.</span><span class="n">get_peer</span><span class="p">(</span><span class="nb">id</span><span class="p">)</span>
+<span class="n">peer</span><span class="o">.</span><span class="n">get_statistic</span><span class="p">(</span><span class="n">ENetPacketPeer</span><span class="o">.</span><span class="n">PEER_ROUND_TRIP_TIME</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+
+  </div><!-- /.entry-content -->
+</section>
+<script src="https://giscus.app/client.js"
+        data-repo="lyncir/lyncir.github.io"
+        data-repo-id="R_kgDOG6y0Rw"
+        data-category="Announcements"
+        data-category-id="DIC_kwDOG6y0R84COoru"
+        data-mapping="pathname"
+        data-reactions-enabled="1"
+        data-emit-metadata="0"
+        data-input-position="bottom"
+        data-theme="light"
+        data-lang="zh-CN"
+        data-loading="lazy"
+        crossorigin="anonymous"
+        async>
+</script>
+        <footer id="contentinfo" class="body">
+                <address id="about" class="vcard body">
+                Proudly powered by <a href="https://getpelican.com/">Pelican</a>,
+                which takes great advantage of <a href="https://www.python.org/">Python</a>.
+                </address><!-- /#about -->
+        </footer><!-- /#contentinfo -->
+</body>
+</html>

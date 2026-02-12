@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+          <title>Lyncir's Blog - 内存数据库</title>
+        <meta charset="utf-8" />
+        <meta name="generator" content="Pelican" />
+        <link href="https://lyncir.github.io/feeds/all.atom.xml" type="application/atom+xml" rel="alternate" title="Lyncir's Blog Full Atom Feed" />
+
+        <link rel="stylesheet" href="https://lyncir.github.io/theme/css/rdark.css" />
+	<link rel="stylesheet" type="text/css" href="https://lyncir.github.io/theme/css/main.css" />
+        <link href="https://lyncir.github.io/" type="application/atom+xml" rel="alternate" title="Lyncir's Blog ATOM Feed" /><!--[if IE]><script src="http://html5shiv.googlecode.com/svn/trunk/html5.js"></script><![endif]-->
+	
+<!-- Using MathJax, with the delimiters $ -->
+<!-- Conflict with pygments for the .mo and .mi -->
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+  "HTML-CSS": {
+  styles: {
+  ".MathJax .mo, .MathJax .mi": {color: "black ! important"}}
+  },
+  tex2jax: {inlineMath: [['$','$'], ['\\\\(','\\\\)']],processEscapes: true}
+  });
+</script>
+
+<script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML"></script>
+</head>
+
+
+
+
+    <meta name="tags" content="database" />
+
+</head>
+
+<body id="index" class="home">
+        <header id="banner" class="body">
+                <h1><a href="https://lyncir.github.io/">Lyncir's Blog</a></h1>
+        </header><!-- /#banner -->
+        <nav id="menu"><ul>
+            <li><a href="https://lyncir.github.io/category/db.html">db</a></li>
+            <li class="active"><a href="https://lyncir.github.io/category/game-dev.html">game-dev</a></li>
+            <li><a href="https://lyncir.github.io/category/git.html">git</a></li>
+            <li><a href="https://lyncir.github.io/category/linux.html">linux</a></li>
+            <li><a href="https://lyncir.github.io/category/python.html">python</a></li>
+        </ul></nav><!-- /#menu -->
+<section id="content" class="body">
+  <header>
+    <h2 class="entry-title">
+      <a href="https://lyncir.github.io/memory-database.html" rel="bookmark"
+         title="Permalink to 内存数据库">内存数据库</a></h2>
+ 
+  </header>
+  <footer class="post-info">
+    <time class="published" datetime="2026-02-12T14:23:00+08:00">
+      2026-02-12 14:23:00
+    </time>
+    <address class="vcard author">
+      By           <a class="url fn" href="https://lyncir.github.io/author/lyncir.html">lyncir</a>
+    </address>
+    <div class="category">
+        Category: <a href="https://lyncir.github.io/category/game-dev.html">game-dev</a>
+    </div>
+    <div class="tags">
+        Tags:
+            <a href="https://lyncir.github.io/tag/database.html">database</a>
+    </div>
+  </footer><!-- /.post-info -->
+  <div class="entry-content">
+    <div class="section" id="section-2">
+<h2>背景</h2>
+<p>最近在考虑如何使用python实现一个内存数据库来写有状态游戏服务器。
+主要的流程是这样子的:</p>
+<pre class="literal-block">
+                +-------------------------------+
+                |           世界服务            |
+                |                               |
++-------+       |   +---------+                 |
+| 队列  | ---&gt;  |   | 业务处理|                 |
++-------|       |   +---------+                 |
+                |   +---------+                 |
+                |   | 业务处理|                 |
+                |   +---------+                 |
+                +-------------------------------+
+</pre>
+</div>
+<div class="section" id="section-3">
+<h2>实现</h2>
+<ol class="arabic simple">
+<li>Python3.14t(自由线程)</li>
+<li>PyO3绑定Rust的scc(Scalable Concurrent Containers)</li>
+</ol>
+<p>示例:</p>
+<div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">pyscc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Database</span><span class="p">,</span> <span class="n">Document</span>
+
+<span class="c1"># 创建数据库</span>
+<span class="n">db</span> <span class="o">=</span> <span class="n">Database</span><span class="p">()</span>
+
+<span class="c1"># 获取集合(如果不存在则创建集合)</span>
+<span class="n">col</span> <span class="o">=</span> <span class="n">db</span><span class="o">.</span><span class="n">get_collection</span><span class="p">(</span><span class="s2">&quot;User&quot;</span><span class="p">)</span>
+
+<span class="c1"># 为集合创建索引</span>
+<span class="n">col</span><span class="o">.</span><span class="n">create_index</span><span class="p">(</span><span class="s2">&quot;age&quot;</span><span class="p">)</span>
+<span class="n">col</span><span class="o">.</span><span class="n">create_index</span><span class="p">(</span><span class="s2">&quot;name&quot;</span><span class="p">)</span>
+
+<span class="c1"># 定义文档</span>
+<span class="n">doc</span> <span class="o">=</span> <span class="n">Document</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;a&quot;</span><span class="p">,</span> <span class="n">age</span><span class="o">=</span><span class="mi">18</span><span class="p">)</span>
+<span class="c1"># 插入文档</span>
+<span class="n">col</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="n">doc</span><span class="p">)</span>
+
+<span class="n">doc</span> <span class="o">=</span> <span class="n">Document</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;b&quot;</span><span class="p">,</span> <span class="n">age</span><span class="o">=</span><span class="mi">20</span><span class="p">)</span>
+<span class="n">col</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="n">doc</span><span class="p">)</span>
+
+<span class="c1"># 单列查询(&quot;查询名字为a&quot;)</span>
+<span class="n">records</span> <span class="o">=</span> <span class="n">col</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s2">&quot;name&quot;</span><span class="p">,</span> <span class="s2">&quot;a&quot;</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">record</span> <span class="ow">in</span> <span class="n">records</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">record</span><span class="o">.</span><span class="n">to_dict</span><span class="p">())</span>
+
+<span class="c1"># 范围查询(&quot;查询年龄19到20&quot;)</span>
+<span class="n">records</span> <span class="o">=</span> <span class="n">col</span><span class="o">.</span><span class="n">find_range</span><span class="p">(</span><span class="s2">&quot;age&quot;</span><span class="p">,</span> <span class="mi">19</span><span class="p">,</span> <span class="mi">20</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">records</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">r</span><span class="o">.</span><span class="n">to_dict</span><span class="p">())</span>
+
+<span class="c1"># 复杂查询(&quot;查询18到20且名字为b&quot;)</span>
+<span class="n">filters</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="p">{</span><span class="s2">&quot;field&quot;</span><span class="p">:</span> <span class="s2">&quot;age&quot;</span><span class="p">,</span> <span class="s2">&quot;op&quot;</span><span class="p">:</span> <span class="s2">&quot;range&quot;</span><span class="p">,</span> <span class="s2">&quot;min&quot;</span><span class="p">:</span> <span class="mi">18</span><span class="p">,</span> <span class="s2">&quot;max&quot;</span><span class="p">:</span> <span class="mi">20</span><span class="p">},</span>
+    <span class="p">{</span><span class="s2">&quot;field&quot;</span><span class="p">:</span> <span class="s2">&quot;name&quot;</span><span class="p">,</span> <span class="s2">&quot;op&quot;</span><span class="p">:</span> <span class="s2">&quot;eq&quot;</span><span class="p">,</span> <span class="s2">&quot;value&quot;</span><span class="p">:</span> <span class="s2">&quot;b&quot;</span><span class="p">}</span>
+<span class="p">]</span>
+<span class="n">records</span> <span class="o">=</span> <span class="n">col</span><span class="o">.</span><span class="n">find_complex</span><span class="p">(</span><span class="n">filters</span><span class="p">,</span> <span class="n">op</span><span class="o">=</span><span class="s2">&quot;and&quot;</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">records</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">r</span><span class="o">.</span><span class="n">to_dict</span><span class="p">())</span>
+</pre></div>
+</div>
+
+  </div><!-- /.entry-content -->
+</section>
+<script src="https://giscus.app/client.js"
+        data-repo="lyncir/lyncir.github.io"
+        data-repo-id="R_kgDOG6y0Rw"
+        data-category="Announcements"
+        data-category-id="DIC_kwDOG6y0R84COoru"
+        data-mapping="pathname"
+        data-reactions-enabled="1"
+        data-emit-metadata="0"
+        data-input-position="bottom"
+        data-theme="light"
+        data-lang="zh-CN"
+        data-loading="lazy"
+        crossorigin="anonymous"
+        async>
+</script>
+        <footer id="contentinfo" class="body">
+                <address id="about" class="vcard body">
+                Proudly powered by <a href="https://getpelican.com/">Pelican</a>,
+                which takes great advantage of <a href="https://www.python.org/">Python</a>.
+                </address><!-- /#about -->
+        </footer><!-- /#contentinfo -->
+</body>
+</html>

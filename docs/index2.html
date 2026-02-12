@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+        <title>Lyncir's Blog</title>
+        <meta charset="utf-8" />
+        <meta name="generator" content="Pelican" />
+        <link href="https://lyncir.github.io/feeds/all.atom.xml" type="application/atom+xml" rel="alternate" title="Lyncir's Blog Full Atom Feed" />
+
+        <link rel="stylesheet" href="https://lyncir.github.io/theme/css/rdark.css" />
+	<link rel="stylesheet" type="text/css" href="https://lyncir.github.io/theme/css/main.css" />
+        <link href="https://lyncir.github.io/" type="application/atom+xml" rel="alternate" title="Lyncir's Blog ATOM Feed" /><!--[if IE]><script src="http://html5shiv.googlecode.com/svn/trunk/html5.js"></script><![endif]-->
+	
+<!-- Using MathJax, with the delimiters $ -->
+<!-- Conflict with pygments for the .mo and .mi -->
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+  "HTML-CSS": {
+  styles: {
+  ".MathJax .mo, .MathJax .mi": {color: "black ! important"}}
+  },
+  tex2jax: {inlineMath: [['$','$'], ['\\\\(','\\\\)']],processEscapes: true}
+  });
+</script>
+
+<script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML"></script>
+</head>
+</head>
+
+<body id="index" class="home">
+        <header id="banner" class="body">
+                <h1><a href="https://lyncir.github.io/">Lyncir's Blog</a></h1>
+        </header><!-- /#banner -->
+        <nav id="menu"><ul>
+            <li><a href="https://lyncir.github.io/category/db.html">db</a></li>
+            <li><a href="https://lyncir.github.io/category/game-dev.html">game-dev</a></li>
+            <li><a href="https://lyncir.github.io/category/git.html">git</a></li>
+            <li><a href="https://lyncir.github.io/category/linux.html">linux</a></li>
+            <li><a href="https://lyncir.github.io/category/python.html">python</a></li>
+        </ul></nav><!-- /#menu -->
+<section id="content">
+<h2>All articles</h2>
+
+<ol id="post-list">
+        <li><article class="hentry">
+                <header> <h2 class="entry-title"><a href="https://lyncir.github.io/godot-study.html" rel="bookmark" title="Permalink to Godot 笔记">Godot 笔记</a></h2> </header>
+                <footer class="post-info">
+                    <time class="published" datetime="2022-07-19T17:09:00+08:00"> 2022-07-19 17:09:00 </time>
+                    <address class="vcard author">By
+                        <a class="url fn" href="https://lyncir.github.io/author/lyncir.html">lyncir</a>
+                    </address>
+                </footer><!-- /.post-info -->
+                <div class="entry-content"> <p>代码基于Godot 4.0</p>
+<div class="section" id="gdscript">
+<h2>GdScript脚本</h2>
+<p>类似Python</p>
+<p>示例:</p>
+<div class="highlight"><pre><span></span><span class="c1"># 一个文件就是一个类</span>
+
+<span class="c1"># 继承</span>
+
+<span class="n">extends</span> <span class="n">BaseClass</span>
+
+<span class="c1"># (可选) 可自定义图标的类定义</span>
+
+<span class="n">class_name</span> <span class="n">MyClass</span><span class="p">,</span> <span class="s2">&quot;res://path/to/optional/icon.svg&quot;</span>
+
+
+<span class="c1"># 成 …</span></pre></div></div> </div><!-- /.entry-content -->
+        </article></li>
+        <li><article class="hentry">
+                <header> <h2 class="entry-title"><a href="https://lyncir.github.io/linux-command.html" rel="bookmark" title="Permalink to Linux常用命令">Linux常用命令</a></h2> </header>
+                <footer class="post-info">
+                    <time class="published" datetime="2022-07-09T15:42:00+08:00"> 2022-07-09 15:42:00 </time>
+                    <address class="vcard author">By
+                        <a class="url fn" href="https://lyncir.github.io/author/lyncir.html">lyncir</a>
+                    </address>
+                </footer><!-- /.post-info -->
+                <div class="entry-content"> <ul class="simple">
+<li>查看链路上的最大MTU大小</li>
+</ul>
+<div class="highlight"><pre><span></span>$<span class="w"> </span><span class="nv">size</span><span class="o">=</span><span class="m">1272</span>
+<span class="k">while</span><span class="w"> </span>ping<span class="w"> </span>-s<span class="w"> </span><span class="nv">$size</span><span class="w"> </span>-c1<span class="w"> </span>-M<span class="w"> </span><span class="k">do</span><span class="w"> </span>google.com<span class="w"> </span>&gt;<span class="p">&amp;</span>/dev/null<span class="p">;</span><span class="w"> </span><span class="k">do</span>
+<span class="w">  </span><span class="o">((</span><span class="nv">size</span><span class="o">+=</span><span class="m">4</span><span class="o">))</span>
+<span class="k">done</span>
+<span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;Max MTU size: </span><span class="k">$((</span><span class="nv">size</span><span class="o">-</span><span class="m">4</span><span class="o">+</span><span class="m">28</span><span class="k">))</span><span class="s2">&quot;</span>
+</pre></div>
+<ul class="simple">
+<li>模拟常见网络问题</li>
+</ul>
+<div class="highlight"><pre><span></span><span class="c1"># 使用 `iptables` 丢弃传入 …</span></pre></div> </div><!-- /.entry-content -->
+        </article></li>
+        <li><article class="hentry">
+                <header> <h2 class="entry-title"><a href="https://lyncir.github.io/python-study-resource.html" rel="bookmark" title="Permalink to Python学习资源">Python学习资源</a></h2> </header>
+                <footer class="post-info">
+                    <time class="published" datetime="2022-06-27T16:06:00+08:00"> 2022-06-27 16:06:00 </time>
+                    <address class="vcard author">By
+                        <a class="url fn" href="https://lyncir.github.io/author/lyncir.html">lyncir</a>
+                    </address>
+                </footer><!-- /.post-info -->
+                <div class="entry-content"> <div class="section" id="section-1">
+<h2>基础</h2>
+<ul class="simple">
+<li><a class="reference external" href="http://www.linuxtopia.org/online_books/programming_books/python_programming/index.html">Building Skills in Python</a><ul>
+<li>个人认为不错的入门教程</li>
+</ul>
+</li>
+</ul>
+</div>
+<div class="section" id="section-2">
+<h2>进阶</h2>
+<ul class="simple">
+<li><a class="reference external" href="https://www.oreilly.com/library/view/fluent-python/9781491946237/">Fluent Python</a><ul>
+<li>流畅的python</li>
+</ul>
+</li>
+<li><a class="reference external" href="https://www.oreilly.com/library/view/python-parallel-programming/9781785289583/">Python Parallel Programming Cookbook</a><ul>
+<li>Python并行编程</li>
+<li><a class="reference external" href="http://python-parallel-programmning-cookbook.readthedocs.io/">中文</a></li>
+</ul>
+</li>
+<li><a class="reference external" href="https://runestone.academy/ns/books/published/pythonds/index.html">Problem Solving with Algorithms and Data Structures using Python</a><ul>
+<li>Python数据结构 …</li></ul></li></ul></div> </div><!-- /.entry-content -->
+        </article></li>
+        <li><article class="hentry">
+                <header> <h2 class="entry-title"><a href="https://lyncir.github.io/index-digest.html" rel="bookmark" title="Permalink to 数据库schema优化工具">数据库schema优化工具</a></h2> </header>
+                <footer class="post-info">
+                    <time class="published" datetime="2022-04-15T11:42:00+08:00"> 2022-04-15 11:42:00 </time>
+                    <address class="vcard author">By
+                        <a class="url fn" href="https://lyncir.github.io/author/lyncir.html">lyncir</a>
+                    </address>
+                </footer><!-- /.post-info -->
+                <div class="entry-content"> <p><a class="reference external" href="https://github.com/macbre/index-digest">index-digest</a>: 分析数据库查询和schema并提供索引改进建议</p>
+<div class="section" id="section-1">
+<h2>安装</h2>
+<div class="highlight"><pre><span></span>$<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>indexdigest
+</pre></div>
+</div>
+<div class="section" id="section-2">
+<h2>数据库查询日志</h2>
+<p>示例:</p>
+<div class="highlight"><pre><span></span><span class="c1">-- A comment</span>
+<span class="k">select</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="k">from</span><span class="w"> </span><span class="n">0002_not_used_indices</span><span class="w"> </span><span class="k">order</span><span class="w"> </span><span class="k">by</span><span class="w"> </span><span class="n">id</span>
+<span class="k">select</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="k">from</span><span class="w"> </span><span class="n">0002_not_used_indices …</span></pre></div></div> </div><!-- /.entry-content -->
+        </article></li>
+        <li><article class="hentry">
+                <header> <h2 class="entry-title"><a href="https://lyncir.github.io/python-enum.html" rel="bookmark" title="Permalink to python枚举">python枚举</a></h2> </header>
+                <footer class="post-info">
+                    <time class="published" datetime="2022-04-02T14:01:24+08:00"> 2022-04-02 14:01:24 </time>
+                    <address class="vcard author">By
+                        <a class="url fn" href="https://lyncir.github.io/author/lyncir.html">lyncir</a>
+                    </address>
+                </footer><!-- /.post-info -->
+                <div class="entry-content"> <p>python在3.4版本新加了对枚举的支持,那在此之前都是怎么来做枚举的呢?</p>
+<ol class="arabic simple">
+<li>直接使用定义变量的方法</li>
+</ol>
+<div class="highlight"><pre><span></span><span class="n">RED</span> <span class="o">=</span> <span class="mi">1</span>
+<span class="n">GREEN</span> <span class="o">=</span> <span class="mi">2</span>
+<span class="n">BLUE</span> <span class="o">=</span> <span class="mi">3</span>
+
+<span class="k">assert</span> <span class="n">RED</span> <span class="o">==</span> <span class="mi">1 …</span></pre></div> </div><!-- /.entry-content -->
+        </article></li>
+</ol><!-- /#posts-list -->
+<p class="paginator">
+        <a href="https://lyncir.github.io/index.html">&#8647;</a>
+        <a href="https://lyncir.github.io/index.html">&laquo;</a>
+    Page 2 / 3
+        <a href="https://lyncir.github.io/index3.html">&raquo;</a>
+        <a href="https://lyncir.github.io/index3.html">&#8649;</a>
+</p>
+</section><!-- /#content -->
+        <footer id="contentinfo" class="body">
+                <address id="about" class="vcard body">
+                Proudly powered by <a href="https://getpelican.com/">Pelican</a>,
+                which takes great advantage of <a href="https://www.python.org/">Python</a>.
+                </address><!-- /#about -->
+        </footer><!-- /#contentinfo -->
+</body>
+</html>
